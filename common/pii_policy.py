@@ -10,7 +10,7 @@ sample files so they can be published in the public GitHub repo.
   - Bot accounts (name ends in "bot", which Wikipedia requires) and
     system accounts like "MediaWiki default"                      -> kept as-is
   - User / User talk page titles (they contain usernames or IPs) -> hashed
-  - Edit summaries: IPs, e-mail addresses and User:/Contributions links masked
+  - Edit summaries: IPs, e-mail addresses, User: and Special:.../<name> links masked
 Hashes are salted SHA-256; the salt comes from the PII_SALT environment variable and is
 never committed (in Databricks it lives in a secret scope).
 
@@ -30,7 +30,14 @@ SYSTEM_ACCOUNTS = {"MediaWiki default", "Maintenance script", "MediaWiki message
 ALREADY_MASKED = re.compile(r"^(user|ip|tmp)_[0-9a-f]{16}$")
 # User / User talk / Contributions links in edit summaries. Local namespace names taken from our samples
 USER_LINK_IN_TEXT = re.compile(
-    r"((?:User|User talk|Special:Contributions|صارف|تبادلۂ خیال صارف|ورتنوالا|ورتن گل بات|واپرائيندڙ|کارن)[:/])[^\]|/\n]+",
+    r"((?:User|User talk|Special:Contributions|صارف|تبادلۂ خیال صارف|ورتنوالا|ورتن گل بات|واپرائيندڙ|کارن)[:/])(?:\[(?:user|ip)\]|[^\[\]|/\n]+)(?:\|(?:\[(?:user|ip)\]|[^\[\]\n])*)?",
+    re.IGNORECASE)
+# Special:Contributions/<name>, Special:Log/<name> etc, in any language (urdu writes خاص:شراکتیں/<name>).
+# pages that take a page title / revision id instead of a user are left alone. "[" is excluded
+# from the name so an already masked [user] or [ip] is not masked again. the |label after
+# the link usually repeats the name, so it goes too
+SPECIAL_SUBPAGE_IN_TEXT = re.compile(
+    r"((?:Special|خاص|ځانګړی|ځانگړی):(?!WhatLinksHere|PrefixIndex|RecentChangesLinked|Redirect)[^\]|/\n]+/)(?:\[(?:user|ip)\]|[^\[\]|/\n]+)(?:\|(?:\[(?:user|ip)\]|[^\[\]\n])*)?",
     re.IGNORECASE)
 USER_NAMESPACES = {"2", "3"}  # User, User talk
 
@@ -56,7 +63,8 @@ def mask_text(text):
         return text
     text = IP_IN_TEXT.sub("[ip]", text)
     text = EMAIL_IN_TEXT.sub("[email]", text)
-    return USER_LINK_IN_TEXT.sub(lambda m: m.group(1) + "[user]", text)
+    text = USER_LINK_IN_TEXT.sub(lambda m: m.group(1) + "[user]", text)
+    return SPECIAL_SUBPAGE_IN_TEXT.sub(lambda m: m.group(1) + "[user]", text)
 
 
 def mask_title(title):

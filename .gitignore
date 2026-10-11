@@ -7,3 +7,8 @@ watermarks.json
 sample_data/raw_unmasked/
 __pycache__/
 .ipynb_checkpoints/
+# local spark runs (scripts/run_local.py)
+.local/
+metastore_db/
+derby.log
+spark-warehouse/

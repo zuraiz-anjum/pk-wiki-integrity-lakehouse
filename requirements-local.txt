@@ -1,0 +1,4 @@
+# local runs only (Databricks has all of this already). pyspark needs Java 17, see scripts/run_local.py
+pyspark==3.5.3
+delta-spark==3.2.1
+requests

@@ -769,6 +769,24 @@ Checks we ran on the Silver tables after all of that (the same queries are in `9
 - 536 old dump rows have `rev_ts_pkt` 6 hours ahead of UTC instead of 5. We thought it was a bug,
   but they are all between June and October 2008, when Pakistan had daylight saving time.
 
+### On Databricks
+
+After the local runs we ran the same thing on our Databricks Free Edition workspace (serverless),
+from the Git folder. `00_setup` created the 10 tables with their primary key constraints and
+copied the samples into the volume. Then, straight from `ops.pipeline_execution_logs`:
+
+| run_id | What | Steps | Status | Inserted | Updated | Deleted |
+| --- | --- | --- | --- | --- | --- | --- |
+| `dbx-full-1` | full load, snapshot 2026-08 | 10 | all SUCCESS | 43,208 | 0 | 0 |
+| `dbx-incr-1` | incremental, `start_date=2026-09-27` | 11 | all SUCCESS | 34,367 | 17 | 0 |
+| `dbx-full-2` | same full load again | 10 | all SUCCESS | 0 | 0 | 0 |
+| `dbx-incr-2-standard` | incremental with no dates (normal daily run) | 11 | all SUCCESS | 0 | 0 | 0 |
+| job run | `pkwiki-lakehouse-daily` started once by hand, code pulled from GitHub | 11 | all SUCCESS | 0 | 0 | 0 |
+
+(Inserted counts every layer together, e.g. the full load is 20,000 bronze rows + 20,000 silver
+rows + 3,208 SCD2 versions.) The row counts per table are the same as in the local runs. The drift
+demo, run into `pkwiki_drift`, gave the same 6 drift log rows and 7 quarantined rows as locally.
+
 ## Cost and free tier notes
 
 - Databricks Free Edition is serverless only and has a daily compute limit, so we keep runs small:

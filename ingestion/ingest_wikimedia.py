@@ -10,6 +10,7 @@ Usage
   python ingest_wikimedia.py full --snapshot 2026-08 --sample-lines 5000     # sample
   python ingest_wikimedia.py full --snapshot 2026-08                          # real baseline
   python ingest_wikimedia.py incremental                                      # daily run
+  python ingest_wikimedia.py incremental --start 2026-09-20                   # re-pull a past window
 """
 import argparse, bz2, datetime as dt, json, os, pathlib
 import requests
@@ -19,12 +20,19 @@ DUMP = "https://dumps.wikimedia.org/other/mediawiki_history/{s}/{w}/{s}.{w}.all-
 # Contact e-mail comes from an env var / Databricks secret so it is not published in the repo
 CONTACT = os.getenv("WIKI_CONTACT_EMAIL", "set-WIKI_CONTACT_EMAIL")
 UA = {"User-Agent": f"PK-Wiki-Lakehouse/0.1 (university data engineering project; contact: {CONTACT})"}
-STATE = pathlib.Path("watermarks.json")
 RC_PROPS = "title|ids|sizes|flags|user|userid|timestamp|comment|sha1|loginfo|tags|redirect"
 
 
 def utcnow():
     return dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+
+
+def api_ts(value):
+    # 2026-09-20 or 2026-09-20T06:00:00Z -> the form the api wants
+    t = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=dt.timezone.utc)
+    return t.astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def full_load(snapshot, out, sample_lines):
@@ -51,11 +59,13 @@ def full_load(snapshot, out, sample_lines):
             print(f"{wiki}: wrote {min(len(lines), sample_lines)} sample rows")
 
 
-def incremental(out, max_rows):
-    state = json.loads(STATE.read_text()) if STATE.exists() else {}
+def incremental(out, max_rows, state_file="watermarks.json", start=None):
+    state_file = pathlib.Path(state_file)
+    state = json.loads(state_file.read_text()) if state_file.exists() else {}
     run_end = utcnow()
     for wiki, lang in WIKIS.items():
-        since = state.get(wiki, (run_end - dt.timedelta(days=1)).isoformat().replace("+00:00", "Z"))
+        # --start wins over the watermark (backfill), otherwise carry on from the last run
+        since = start or state.get(wiki, (run_end - dt.timedelta(days=1)).isoformat().replace("+00:00", "Z"))
         params = {"action": "query", "list": "recentchanges", "format": "json", "formatversion": 2,
                   "rcdir": "newer", "rcstart": since, "rcend": run_end.isoformat().replace("+00:00", "Z"),
                   "rcprop": RC_PROPS, "rclimit": 500}
@@ -77,7 +87,8 @@ def incremental(out, max_rows):
                                     "_window_start": since, "record": rc}, ensure_ascii=False) + "\n")
         print(f"{wiki}: {len(rows)} changes since {since}")
         state[wiki] = run_end.isoformat().replace("+00:00", "Z")
-    STATE.write_text(json.dumps(state, indent=2))
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    state_file.write_text(json.dumps(state, indent=2))
 
 
 if __name__ == "__main__":
@@ -87,10 +98,14 @@ if __name__ == "__main__":
     ap.add_argument("--sample-lines", type=int, default=0)
     ap.add_argument("--max-rows", type=int, default=0, help="cap rows per wiki (samples/testing)")
     ap.add_argument("--out", default="sample_data/raw")
+    ap.add_argument("--start", type=api_ts,
+                    help="incremental: pull from this date/time instead of the saved watermark (backfill). "
+                         "the api only keeps ~30 days of recent changes, older needs the dump")
+    ap.add_argument("--state", default="watermarks.json", help="watermark file, can live in the volume")
     a = ap.parse_args()
     if a.mode == "full":
         if not a.snapshot:
             ap.error("--snapshot is required for a full load")
         full_load(a.snapshot, a.out, a.sample_lines)
     else:
-        incremental(a.out, a.max_rows)
+        incremental(a.out, a.max_rows, a.state, a.start)

@@ -1,0 +1,9 @@
+# secrets
+.env
+*.secret
+# state and full data (only small masked samples are committed)
+watermarks.json
+*.bz2
+sample_data/raw_unmasked/
+__pycache__/
+.ipynb_checkpoints/

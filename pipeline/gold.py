@@ -44,7 +44,8 @@ MIN_REVERTS_CONTESTED = 2   # agg_edit_wars keeps page-days with at least this m
 # (wiki_key, wiki, language_name, language_native, language_code, script, site_url)
 WIKI_INFO = [
     (1, "urwiki", "Urdu", "اردو", "ur", "Urdu alphabet (Perso-Arabic, Nastaliq)", "https://ur.wikipedia.org"),
-    (2, "pnbwiki", "Punjabi (Shahmukhi)", "پنجابی", "pnb", "Shahmukhi (Perso-Arabic)", "https://pnb.wikipedia.org"),
+    (2, "pnbwiki", "Punjabi (Shahmukhi)", "پنجابی", "pnb", "Shahmukhi (Perso-Arabic)",
+     "https://pnb.wikipedia.org"),
     (3, "sdwiki", "Sindhi", "سنڌي", "sd", "Sindhi alphabet (Perso-Arabic)", "https://sd.wikipedia.org"),
     (4, "pswiki", "Pashto", "پښتو", "ps", "Pashto alphabet (Perso-Arabic)", "https://ps.wikipedia.org"),
 ]
@@ -102,7 +103,8 @@ def wiki_key_of(col):
 def sk(*cols):
     # xxhash64 is signed, so half the hashes would be negative and look like an unknown member.
     # clearing the sign bit keeps every real key >= 0 (63 bits is still plenty against collisions)
-    return F.xxhash64(F.concat_ws("|", *[F.col(c).cast("string") for c in cols]))         .bitwiseAND(F.lit(0x7FFFFFFFFFFFFFFF))
+    h = F.xxhash64(F.concat_ws("|", *[F.col(c).cast("string") for c in cols]))
+    return h.bitwiseAND(F.lit(0x7FFFFFFFFFFFFFFF))
 
 
 def date_key(col):
@@ -280,7 +282,8 @@ def load_dim_page(spark, cfg, run, full, source_param):
         d = (src.withColumn("page_key", sk("page_sk"))
              .withColumn("wiki_key", wiki_key_of("wiki"))
              .unionByName(unknown_members(spark, "page"), allowMissingColumns=True)
-             .withColumn("namespace_name", F.when(ns.isNull(), F.lit(None)).otherwise(F.coalesce(ns_name, F.lit("Other"))))
+             .withColumn("namespace_name",
+                         F.when(ns.isNull(), F.lit(None)).otherwise(F.coalesce(ns_name, F.lit("Other"))))
              .withColumn("is_content_page", ns == 0))
         m["rows_inserted"], m["rows_updated"], m["rows_deleted"] = merge_gold(
             spark, cfg, "gold_dim_page", with_lineage(d, sc.GOLD_DIM_PAGE, run),
@@ -502,8 +505,8 @@ def load_agg_edit_wars(spark, cfg, run, days, source_param):
         rv = F.col("is_revert")
         # calendar day (UTC) rather than a rolling 24 hours: one row per page per day is easier
         # to read in the report and to refresh day by day.
-        # the Phase 1 rule (3+ reverts by 2+ editors) only matched 1 page-day in our data, too few
-        # for a leaderboard. so the table keeps every page-day with at least 2 reverts (a page
+        # the Phase 1 rule (3+ reverts by 2+ editors) leaves only a handful of rows on our data,
+        # too few for a leaderboard. so the table keeps every page-day with at least 2 reverts (a page
         # reverted twice in one day is contested, whoever did it) and the strict rule becomes the
         # is_edit_war flag, so the report can show both
         d = (r.groupBy("wiki_key", "page_id", "date_key").agg(
@@ -539,7 +542,8 @@ def load_agg_editor_monthly(spark, cfg, run, source_param):
         # editors seen in a month, keyed by that month, to check "did they come back next month"
         nxt = em.select("wiki_key", "editor_hash", F.col("month_key").alias("_next_month"), F.lit(True).alias("_back"))
         em = (em.join(first, ["wiki_key", "editor_hash"])
-              .withColumn("_next_month", date_key(F.add_months(F.to_date(F.col("month_key").cast("string"), "yyyyMMdd"), 1)))
+              .withColumn("_month", F.to_date(F.col("month_key").cast("string"), "yyyyMMdd"))
+              .withColumn("_next_month", date_key(F.add_months(F.col("_month"), 1)))
               .join(nxt, ["wiki_key", "editor_hash", "_next_month"], "left"))
         back = F.coalesce("_back", F.lit(False))
 

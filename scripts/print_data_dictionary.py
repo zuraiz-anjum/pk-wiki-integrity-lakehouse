@@ -52,7 +52,8 @@ TABLE_NOTES = {
     "gold_fact_page_event": "Fact, one row per page log event (create, move, delete, restore, protect, ...).",
     "gold_agg_wiki_daily": "Aggregate fact, one row per wiki per day, built from the two facts.",
     "gold_agg_revert_latency": "Aggregate fact, time to revert per wiki, month and editor type of the reverted edit.",
-    "gold_agg_edit_wars": "Aggregate fact, page-days with at least 3 reverts by at least 2 different editors.",
+    "gold_agg_edit_wars": "Aggregate fact, page-days with at least 2 reverts. is_edit_war marks the Phase 1 rule "
+                          "(3 or more reverts by 2 or more different editors).",
     "gold_agg_editor_monthly": "Aggregate fact, editor counts and next-month return per wiki, month and human / bot.",
     "gold_watermark": "Newest silver load_timestamp each gold table has already taken in (incremental refresh).",
     "execution_log": "Audit log. One row per unit of work (file/partition or table) per run.",

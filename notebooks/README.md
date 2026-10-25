@@ -8,9 +8,10 @@ Databricks source-format notebooks (`.py` with `# COMMAND ----------` cells). Op
 | `01_bronze_ingest` | raw files -> bronze (insert-only, idempotent) | every run, step 1 |
 | `02_silver_unify_and_mask` | bronze -> silver: cast, merge dump + api, mask PII, quarantine | every run, step 2 |
 | `03_silver_scd2_and_reverts` | revert detection + SCD2 `silver.page` / `silver.editor` | every run, step 3 |
+| `04_gold_star` | silver -> gold: star schema dims, facts and aggregates (MERGE, only what changed) | every run, step 4 |
 | `99_checks` | logs, idempotency proof, duplicate keys, quarantine/drift, row counts | whenever |
 
-01-03 take the same widgets (`load_type`, `snapshot`, `start_date`, `end_date`, `wikis`, `bronze_mode`, `run_id`, `catalog`, `prefix`, `landing_root`), the daily job in `jobs/` passes them as job parameters. Each one ends by showing its rows from `ops.pipeline_execution_logs`.
+01-04 take the same widgets (`load_type`, `snapshot`, `start_date`, `end_date`, `wikis`, `bronze_mode`, `run_id`, `catalog`, `prefix`, `landing_root`), the daily job in `jobs/` passes them as job parameters. Each one ends by showing its rows from `ops.pipeline_execution_logs`.
 
 Examples:
 - daily run: leave everything at the defaults

@@ -1,6 +1,6 @@
 # Daily job
 
-`pkwiki_pipeline.json` is the job definition (Jobs API 2.1): bronze -> silver -> scd2, each task one of the notebooks, run on serverless (no cluster in the file). The notebooks come straight from the GitHub repo (`git_url`), so whatever is on `main` is what runs. Schedule is 21:00 UTC = 2 AM PKT, created **paused**, unpause it in the UI when you want it to run on its own.
+`pkwiki_pipeline.json` is the job definition (Jobs API 2.1): bronze -> silver -> scd2 -> gold, each task one of the notebooks, run on serverless (no cluster in the file). The notebooks come straight from the GitHub repo (`git_url`), so whatever is on `main` is what runs. Schedule is 21:00 UTC = 2 AM PKT, created **paused**, unpause it in the UI when you want it to run on its own.
 
 Create it either in the UI (Jobs & Pipelines -> Create -> Job, then the `...` menu -> "Edit as JSON" and paste the file) or with the CLI:
 
@@ -8,7 +8,7 @@ Create it either in the UI (Jobs & Pipelines -> Create -> Job, then the `...` me
 databricks jobs create --json @jobs/pkwiki_pipeline.json
 ```
 
-That prints the `job_id`. All tasks get the same job parameters, and `run_id` defaults to `{{job.run_id}}` so the three steps share one id in `ops.pipeline_execution_logs`.
+That prints the `job_id`. All tasks get the same job parameters, and `run_id` defaults to `{{job.run_id}}` so the four steps share one id in `ops.pipeline_execution_logs`. The `gold` task (notebook `04_gold_star`) runs last, so every daily, backfill or full run ends with Gold refreshed from whatever Silver just wrote.
 
 Triggering it (with `--json` the job id goes inside the JSON, not as an argument):
 

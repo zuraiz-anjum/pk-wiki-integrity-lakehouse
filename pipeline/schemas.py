@@ -256,12 +256,13 @@ GOLD_DIM_WIKI = StructType([
     f("language_code", S, "ur, pnb, sd, ps"),
     f("script", S, "writing system"),
     f("site_url", S),
-    f("temp_accounts_first_seen_ts", T, "first edit by a temporary account we have for this wiki (rollout as seen in the data)"),
+    f("temp_accounts_first_seen_ts", T,
+      "first edit by a temporary account we have for this wiki (rollout as seen in the data)"),
     f("load_timestamp", T, "when this row was last written", False),
 ])
 
 GOLD_DIM_PAGE = StructType([
-    f("page_key", L, "surrogate key, xxhash64 of page_sk, -1 to -4 = unknown page of wiki 1 to 4", False),
+    f("page_key", L, "surrogate key, xxhash64 of page_sk (always >= 0), -1 to -4 = unknown page of wiki 1 to 4", False),
     f("page_sk", S, "silver.page key of this version (lineage)", False),
     f("wiki_key", I, "which wiki", False),
     f("wiki", S, "", False),
@@ -279,7 +280,8 @@ GOLD_DIM_PAGE = StructType([
 ])
 
 GOLD_DIM_EDITOR = StructType([
-    f("editor_key", L, "surrogate key, xxhash64 of editor_sk, -1 to -4 = unknown editor of wiki 1 to 4", False),
+    f("editor_key", L, "surrogate key, xxhash64 of editor_sk (always >= 0), -1 to -4 = unknown editor of wiki 1 to 4",
+      False),
     f("editor_sk", S, "silver.editor key of this version (lineage)", False),
     f("wiki_key", I, "which wiki", False),
     f("wiki", S, "", False),

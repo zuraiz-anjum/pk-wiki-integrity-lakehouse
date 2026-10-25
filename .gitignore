@@ -12,3 +12,8 @@ __pycache__/
 metastore_db/
 derby.log
 spark-warehouse/
+
+# power bi local cache and settings
+*.abf
+.pbi/localSettings.json
+dashboard/powerbi/**/*.pbix

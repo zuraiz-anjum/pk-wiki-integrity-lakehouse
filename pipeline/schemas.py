@@ -376,12 +376,14 @@ GOLD_AGG_EDIT_WARS = StructType([
     f("page_id", L, "MediaWiki page id", False),
     f("date_key", I, "UTC day", False),
     f("page_key", L, "page version at the last revert of the day", False),
-    f("revert_count", L, "reverts on the page that day (3 or more)"),
-    f("distinct_reverters", L, "different editors who reverted (2 or more)"),
+    f("revert_count", L, "reverts on the page that day (2 or more)"),
+    f("distinct_reverters", L, "different editors who reverted"),
+    f("reverted_edits", L, "edits on the page that day that were later undone"),
     f("edits", L, "all edits on the page that day"),
     f("distinct_editors", L, "editors involved that day"),
     f("first_revert_ts", T), f("last_revert_ts", T),
     f("span_minutes", DBL, "minutes between the first and last revert"),
+    f("is_edit_war", B, "3 or more reverts by 2 or more different editors (the Phase 1 rule)"),
     f("batch_id", S), f("load_timestamp", T, "", False),
 ])
 

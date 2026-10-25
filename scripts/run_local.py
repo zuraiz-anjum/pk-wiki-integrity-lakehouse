@@ -11,7 +11,7 @@ We use this to test changes before spending Databricks credits.
     python scripts/run_local.py gold   --load_type full
     python scripts/run_local.py all    --load_type incremental --start_date 2026-09-27
     python scripts/run_local.py explain                 (plan of the agg_wiki_daily build -> docs/)
-    python scripts/run_local.py export                  (csv extracts of every gold table -> dashboard/sample_gold/)
+    python scripts/run_local.py export                  (csv extracts of the gold and ops tables -> dashboard/sample_gold/)
     python scripts/run_local.py sql "select * from pkwiki_ops.pipeline_execution_logs"
 
 Tables live in .local/ (gitignored, or $LOCAL_LAKEHOUSE). Delete it to start from scratch.
@@ -21,6 +21,7 @@ import argparse
 import contextlib
 import csv
 import io
+import json
 import os
 import sys
 
@@ -79,8 +80,9 @@ def explain_gold(spark, params):
 
 
 def export_gold(spark, params, limit=30000):
-    """Small csv extract of every gold table, for building the Power BI report offline. The big
-    facts are cut at `limit` rows (newest first), everything else is complete."""
+    """Small csv extract of every gold and ops table, for building the Power BI report offline
+    (ops feeds the pipeline health page). The big facts are cut at `limit` rows (newest first),
+    everything else is complete. Arrays are written as json."""
     from pyspark.sql import functions as F
 
     from pipeline.delta_utils import table_name
@@ -90,7 +92,7 @@ def export_gold(spark, params, limit=30000):
     os.makedirs(out_dir, exist_ok=True)
     order = {"gold_fact_revision": "rev_ts", "gold_fact_page_event": "event_ts"}
     for key, (layer, name, *_) in TABLES.items():
-        if layer != "gold":
+        if layer not in ("gold", "ops"):
             continue
         df = spark.table(table_name(cfg, key))
         if key in order:
@@ -101,7 +103,8 @@ def export_gold(spark, params, limit=30000):
             w = csv.writer(fh)
             w.writerow(df.columns)
             for r in rows:
-                w.writerow(["" if v is None else v for v in r])
+                w.writerow(["" if v is None else json.dumps(v, ensure_ascii=False) if isinstance(v, list) else v
+                            for v in r])
         print(f"{len(rows):>6} rows -> {os.path.relpath(path, ROOT)}")
 
 

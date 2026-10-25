@@ -32,12 +32,13 @@ from pyspark.sql import functions as F
 from pipeline import schemas as sc
 from pipeline.audit import StepSkipped, audit_step
 from pipeline.config import PKT
-from pipeline.delta_utils import (FeatureNotAvailable, conform, insert_columns, optimize_table,
-                                  run_merge, table_name, update_set)
+from pipeline.delta_utils import (FeatureNotAvailable, conform, evolve_schema, insert_columns,
+                                  optimize_table, run_merge, table_name, update_set)
 
 LAYER = "silver_to_gold"
 LINEAGE = {"row_hash", "batch_id", "load_timestamp"}
 MAX_SCOPED_DAYS = 400   # more touched days than this and we just recompute the aggregates fully
+MIN_REVERTS_CONTESTED = 2   # agg_edit_wars keeps page-days with at least this many reverts
 
 # (wiki_key, wiki, language_name, language_native, language_code, script, site_url)
 WIKI_INFO = [
@@ -125,6 +126,9 @@ def merge_gold(spark, cfg, key, df, delete_when=None):
     anything else is a condition on t that limits those deletes to the recomputed scope."""
     layer, name, schema, _, pk = sc.TABLES[key]
     target = cfg.table(layer, name)
+    added = evolve_schema(spark, target, schema)   # a column added to schemas.py after the table was made
+    if added:
+        print(f"  added columns to {target}: {added}")
     view = f"src_{key}"
     df.createOrReplaceTempView(view)
     cols, vals = insert_columns(schema)
@@ -492,15 +496,21 @@ def load_agg_edit_wars(spark, cfg, run, days, source_param):
         m["rows_read"] = r.count()
         rv = F.col("is_revert")
         # calendar day (UTC) rather than a rolling 24 hours: one row per page per day is easier
-        # to read in the report and to refresh day by day
+        # to read in the report and to refresh day by day.
+        # the Phase 1 rule (3+ reverts by 2+ editors) only matched 1 page-day in our data, too few
+        # for a leaderboard. so the table keeps every page-day with at least 2 reverts (a page
+        # reverted twice in one day is contested, whoever did it) and the strict rule becomes the
+        # is_edit_war flag, so the report can show both
         d = (r.groupBy("wiki_key", "page_id", "date_key").agg(
                 F.sum(rv.cast("int")).cast("bigint").alias("revert_count"),
                 F.countDistinct(F.when(rv, F.col("editor_hash"))).alias("distinct_reverters"),
+                F.sum(F.col("is_reverted").cast("int")).cast("bigint").alias("reverted_edits"),
                 F.count(F.lit(1)).alias("edits"), F.countDistinct("editor_hash").alias("distinct_editors"),
                 F.min(F.when(rv, F.col("rev_ts"))).alias("first_revert_ts"),
                 F.max(F.when(rv, F.col("rev_ts"))).alias("last_revert_ts"),
                 F.max(F.when(rv, F.struct("rev_ts", "page_key"))).alias("_last"))
-             .where((F.col("revert_count") >= 3) & (F.col("distinct_reverters") >= 2))
+             .where(F.col("revert_count") >= MIN_REVERTS_CONTESTED)
+             .withColumn("is_edit_war", (F.col("revert_count") >= 3) & (F.col("distinct_reverters") >= 2))
              .withColumn("page_key", F.col("_last.page_key"))
              .withColumn("span_minutes", (F.col("last_revert_ts").cast("long")
                                           - F.col("first_revert_ts").cast("long")) / 60.0))

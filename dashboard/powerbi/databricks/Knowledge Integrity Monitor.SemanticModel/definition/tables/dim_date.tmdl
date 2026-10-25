@@ -1,7 +1,7 @@
 /// Calendar, one row per day from 2001 to 2030. Marked as the date table.
 table dim_date
-	dataCategory: Time
 	lineageTag: ae1b747e-2e77-5adb-855c-c29758568536
+	dataCategory: Time
 
 	column date_key
 		dataType: int64
@@ -153,3 +153,4 @@ table dim_date
 				    Result
 
 	annotation PBI_ResultType = Table
+

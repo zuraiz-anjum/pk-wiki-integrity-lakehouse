@@ -397,7 +397,7 @@ Reverts = CALCULATE ( [Total Edits], fact_revision[is_revert] = TRUE () )
 **Reverted Edits**. Edits that were later undone. Format: Whole number with thousands separator.
 
 ```dax
-Reverted Edits = CALCULATE ( [Total Edits], fact_revision[is_reverted] = TRUE () )
+Reverted Edits = COALESCE ( CALCULATE ( [Total Edits], fact_revision[is_reverted] = TRUE () ), 0 )
 ```
 
 **Revert Rate**. Share of edits that were later undone. Format: Percentage, 1 decimal.
@@ -409,7 +409,7 @@ Revert Rate = DIVIDE ( [Reverted Edits], [Total Edits] )
 **Vandalism Suspects**. Edits reverted within 24 hours by a different editor. Format: Whole number with thousands separator.
 
 ```dax
-Vandalism Suspects = CALCULATE ( [Total Edits], fact_revision[is_vandalism_suspect] = TRUE () )
+Vandalism Suspects = COALESCE ( CALCULATE ( [Total Edits], fact_revision[is_vandalism_suspect] = TRUE () ), 0 )
 ```
 
 **Vandalism Rate**. Share of edits that are vandalism suspects. Format: Percentage, 1 decimal.
@@ -477,7 +477,7 @@ Contested Reverts = SUM ( agg_edit_wars[revert_count] )
 **Contested Pages**. Pages that had at least one day with 2 or more reverts (Q3). Format: Whole number with thousands separator.
 
 ```dax
-Contested Pages = COUNTROWS ( SUMMARIZE ( agg_edit_wars, agg_edit_wars[wiki_key], agg_edit_wars[page_id] ) )
+Contested Pages = COALESCE ( COUNTROWS ( SUMMARIZE ( agg_edit_wars, agg_edit_wars[wiki_key], agg_edit_wars[page_id] ) ), 0 )
 ```
 
 **Edit War Days**. Page days that meet the Phase 1 edit war rule: 3 or more reverts by 2 or more editors (Q3). Format: Whole number with thousands separator.
@@ -490,9 +490,12 @@ Edit War Days = CALCULATE ( COUNTROWS ( agg_edit_wars ), agg_edit_wars[is_edit_w
 
 ```dax
 Edit War Pages =
-    CALCULATE (
-        COUNTROWS ( SUMMARIZE ( agg_edit_wars, agg_edit_wars[wiki_key], agg_edit_wars[page_id] ) ),
-        agg_edit_wars[is_edit_war] = TRUE ()
+    COALESCE (
+        CALCULATE (
+            COUNTROWS ( SUMMARIZE ( agg_edit_wars, agg_edit_wars[wiki_key], agg_edit_wars[page_id] ) ),
+            agg_edit_wars[is_edit_war] = TRUE ()
+        )
+        , 0
     )
 ```
 
@@ -527,7 +530,7 @@ Page Moves = CALCULATE ( [Page Events], dim_change_type[entity] = "page_event", 
 **Pipeline Runs**. Number of pipeline runs (distinct run ids) in the audit log. Format: Whole number with thousands separator.
 
 ```dax
-Pipeline Runs = DISTINCTCOUNT ( pipeline_execution_logs[run_id] )
+Pipeline Runs = COALESCE ( DISTINCTCOUNT ( pipeline_execution_logs[run_id] ), 0 )
 ```
 
 **Steps Logged**. Rows in the audit log, one per step per run. Format: Whole number with thousands separator.
@@ -539,19 +542,19 @@ Steps Logged = COUNTROWS ( pipeline_execution_logs )
 **Successful Steps**. Steps that finished with status SUCCESS. Format: Whole number with thousands separator.
 
 ```dax
-Successful Steps = CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "SUCCESS" )
+Successful Steps = COALESCE ( CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "SUCCESS" ), 0 )
 ```
 
 **Failed Steps**. Steps that finished with status FAILED. Format: Whole number with thousands separator.
 
 ```dax
-Failed Steps = CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "FAILED" )
+Failed Steps = COALESCE ( CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "FAILED" ), 0 )
 ```
 
 **Skipped Steps**. Steps that had nothing to do (status SKIPPED). Format: Whole number with thousands separator. *(Optional: not used on a page. Skip it if you are short on time.)*
 
 ```dax
-Skipped Steps = CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "SKIPPED" )
+Skipped Steps = COALESCE ( CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "SKIPPED" ), 0 )
 ```
 
 **Pipeline Success Rate**. Successful steps out of the steps that actually ran (skipped steps are left out). Format: Percentage, 1 decimal.
@@ -596,13 +599,13 @@ Last Run = MAX ( pipeline_execution_logs[end_ts] )
 **Rows Quarantined**. Rows sitting in the quarantine table. Format: Whole number with thousands separator.
 
 ```dax
-Rows Quarantined = COUNTROWS ( quarantine )
+Rows Quarantined = COALESCE ( COUNTROWS ( quarantine ), 0 )
 ```
 
 **Drift Events**. Schema drift entries the pipeline logged. Format: Whole number with thousands separator.
 
 ```dax
-Drift Events = COUNTROWS ( schema_drift_log )
+Drift Events = COALESCE ( COUNTROWS ( schema_drift_log ), 0 )
 ```
 
 ### 6.6 Theme

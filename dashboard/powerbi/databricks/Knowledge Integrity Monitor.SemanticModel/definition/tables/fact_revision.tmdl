@@ -302,3 +302,4 @@ table fact_revision
 				    Result
 
 	annotation PBI_ResultType = Table
+

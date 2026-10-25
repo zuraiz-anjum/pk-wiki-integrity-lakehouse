@@ -152,3 +152,4 @@ table pipeline_execution_logs
 				    Result
 
 	annotation PBI_ResultType = Table
+

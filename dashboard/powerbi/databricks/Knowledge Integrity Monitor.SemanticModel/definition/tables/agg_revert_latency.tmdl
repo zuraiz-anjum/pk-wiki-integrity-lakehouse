@@ -97,3 +97,4 @@ table agg_revert_latency
 				    Result
 
 	annotation PBI_ResultType = Table
+

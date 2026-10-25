@@ -128,3 +128,4 @@ table dim_editor
 				    Result
 
 	annotation PBI_ResultType = Table
+

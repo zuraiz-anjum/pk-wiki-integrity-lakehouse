@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "Knowledge Integrity Monitor"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "252b77a7-7629-4a51-822d-9c90588faf00"
+  }
+}

@@ -26,7 +26,7 @@ expression GoldSchema = "pkwiki_gold" meta [IsParameterQuery = true, Type = "Tex
 expression OpsSchema = "pkwiki_ops" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
 	lineageTag: f3fc3c6b-a221-5cf7-9451-e66e1e8c0d8b
 
-	annotation PBI_ResultType = Text
+	annotation PBI_ResultType = Exception
 
 /// Picks the columns the model needs and gives them the right types. Works for Databricks and CSV input.
 expression PrepareTable =
@@ -56,3 +56,4 @@ expression PrepareTable =
 	lineageTag: 1dcfc397-6cb7-5eac-8d14-e42279668f2e
 
 	annotation PBI_ResultType = Function
+

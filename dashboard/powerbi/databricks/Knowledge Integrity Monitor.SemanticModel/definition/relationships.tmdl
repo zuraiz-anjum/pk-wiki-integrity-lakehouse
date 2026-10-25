@@ -83,3 +83,4 @@ relationship 60d60566-0b44-5e56-b49b-f86a9c9010dc
 relationship 60cf96de-9b74-51a8-9b0a-05222496ba3a
 	fromColumn: agg_editor_monthly.month_key
 	toColumn: dim_date.date_key
+

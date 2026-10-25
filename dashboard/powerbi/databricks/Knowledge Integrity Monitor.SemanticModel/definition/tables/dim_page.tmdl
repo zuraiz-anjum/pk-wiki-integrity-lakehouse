@@ -136,3 +136,4 @@ table dim_page
 				    Result
 
 	annotation PBI_ResultType = Table
+

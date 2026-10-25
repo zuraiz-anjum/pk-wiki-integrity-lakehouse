@@ -147,3 +147,4 @@ table fact_page_event
 				    Result
 
 	annotation PBI_ResultType = Table
+

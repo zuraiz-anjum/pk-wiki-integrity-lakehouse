@@ -106,3 +106,4 @@ table agg_editor_monthly
 				    Result
 
 	annotation PBI_ResultType = Table
+

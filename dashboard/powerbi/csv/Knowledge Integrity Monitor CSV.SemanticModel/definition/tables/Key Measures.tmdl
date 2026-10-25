@@ -106,7 +106,7 @@ table 'Key Measures'
 		lineageTag: f86046f8-48cb-5893-ad07-7a356eca3813
 
 	/// Edits that were later undone.
-	measure 'Reverted Edits' = CALCULATE ( [Total Edits], fact_revision[is_reverted] = TRUE () )
+	measure 'Reverted Edits' = COALESCE ( CALCULATE ( [Total Edits], fact_revision[is_reverted] = TRUE () ), 0 )
 		formatString: #,0
 		displayFolder: Reverts and vandalism
 		lineageTag: be4eb945-a660-5221-8b67-2c379de768e3
@@ -118,7 +118,7 @@ table 'Key Measures'
 		lineageTag: 79da7aab-40ae-5e76-aa64-19b5f43d66bd
 
 	/// Edits reverted within 24 hours by a different editor.
-	measure 'Vandalism Suspects' = CALCULATE ( [Total Edits], fact_revision[is_vandalism_suspect] = TRUE () )
+	measure 'Vandalism Suspects' = COALESCE ( CALCULATE ( [Total Edits], fact_revision[is_vandalism_suspect] = TRUE () ), 0 )
 		formatString: #,0
 		displayFolder: Reverts and vandalism
 		lineageTag: f85308a3-2465-51f0-9537-dbcb0605ab71
@@ -184,7 +184,7 @@ table 'Key Measures'
 		lineageTag: e5032a61-5eda-50dc-81ac-515b07d76a48
 
 	/// Pages that had at least one day with 2 or more reverts (Q3).
-	measure 'Contested Pages' = COUNTROWS ( SUMMARIZE ( agg_edit_wars, agg_edit_wars[wiki_key], agg_edit_wars[page_id] ) )
+	measure 'Contested Pages' = COALESCE ( COUNTROWS ( SUMMARIZE ( agg_edit_wars, agg_edit_wars[wiki_key], agg_edit_wars[page_id] ) ), 0 )
 		formatString: #,0
 		displayFolder: Edit wars
 		lineageTag: f40a1c98-2cdb-5891-8ce8-e036c0fccf84
@@ -197,9 +197,12 @@ table 'Key Measures'
 
 	/// Pages with at least one edit war day under the Phase 1 rule (Q3).
 	measure 'Edit War Pages' =
-			CALCULATE (
-			    COUNTROWS ( SUMMARIZE ( agg_edit_wars, agg_edit_wars[wiki_key], agg_edit_wars[page_id] ) ),
-			    agg_edit_wars[is_edit_war] = TRUE ()
+			COALESCE (
+			    CALCULATE (
+			        COUNTROWS ( SUMMARIZE ( agg_edit_wars, agg_edit_wars[wiki_key], agg_edit_wars[page_id] ) ),
+			        agg_edit_wars[is_edit_war] = TRUE ()
+			    )
+			    , 0
 			)
 		formatString: #,0
 		displayFolder: Edit wars
@@ -230,7 +233,7 @@ table 'Key Measures'
 		lineageTag: ce3919e4-c081-5a08-acea-8dcb827c977c
 
 	/// Number of pipeline runs (distinct run ids) in the audit log.
-	measure 'Pipeline Runs' = DISTINCTCOUNT ( pipeline_execution_logs[run_id] )
+	measure 'Pipeline Runs' = COALESCE ( DISTINCTCOUNT ( pipeline_execution_logs[run_id] ), 0 )
 		formatString: #,0
 		displayFolder: Pipeline
 		lineageTag: 04949f49-cfbd-5972-a9d2-2b6895b4431c
@@ -242,19 +245,19 @@ table 'Key Measures'
 		lineageTag: 3130247c-dbec-56ea-a139-c95a6acae77a
 
 	/// Steps that finished with status SUCCESS.
-	measure 'Successful Steps' = CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "SUCCESS" )
+	measure 'Successful Steps' = COALESCE ( CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "SUCCESS" ), 0 )
 		formatString: #,0
 		displayFolder: Pipeline
 		lineageTag: 192c1651-cae0-525e-bddb-68fb01dbd997
 
 	/// Steps that finished with status FAILED.
-	measure 'Failed Steps' = CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "FAILED" )
+	measure 'Failed Steps' = COALESCE ( CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "FAILED" ), 0 )
 		formatString: #,0
 		displayFolder: Pipeline
 		lineageTag: b12c1d59-a364-54cc-9ab9-0b3fdb08b7ad
 
 	/// Steps that had nothing to do (status SKIPPED).
-	measure 'Skipped Steps' = CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "SKIPPED" )
+	measure 'Skipped Steps' = COALESCE ( CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "SKIPPED" ), 0 )
 		formatString: #,0
 		displayFolder: Pipeline
 		lineageTag: ec9675b2-c7a1-5f28-b636-7453e0c1da95
@@ -299,13 +302,13 @@ table 'Key Measures'
 		lineageTag: 5bb910b1-56eb-5caf-9382-565d1a3c14be
 
 	/// Rows sitting in the quarantine table.
-	measure 'Rows Quarantined' = COUNTROWS ( quarantine )
+	measure 'Rows Quarantined' = COALESCE ( COUNTROWS ( quarantine ), 0 )
 		formatString: #,0
 		displayFolder: Pipeline
 		lineageTag: 04758b3e-a645-5526-8774-e00adb5a1c01
 
 	/// Schema drift entries the pipeline logged.
-	measure 'Drift Events' = COUNTROWS ( schema_drift_log )
+	measure 'Drift Events' = COALESCE ( COUNTROWS ( schema_drift_log ), 0 )
 		formatString: #,0
 		displayFolder: Pipeline
 		lineageTag: 6e1a7fcc-ca95-56b8-afb0-5ffa5fda33ac

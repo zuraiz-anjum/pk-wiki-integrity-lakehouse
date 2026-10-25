@@ -134,3 +134,4 @@ table agg_edit_wars
 				    Result
 
 	annotation PBI_ResultType = Table
+

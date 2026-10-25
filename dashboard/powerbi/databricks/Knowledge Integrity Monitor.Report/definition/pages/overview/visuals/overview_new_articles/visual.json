@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.5.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "overview_new_articles",
   "position": {
     "x": 16,
@@ -32,24 +32,6 @@
             }
           ]
         },
-        "Y": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Key Measures"
-                    }
-                  },
-                  "Property": "New Articles"
-                }
-              },
-              "queryRef": "Key Measures.New Articles",
-              "nativeQueryRef": "New Articles"
-            }
-          ]
-        },
         "Series": {
           "projections": [
             {
@@ -65,6 +47,24 @@
               },
               "queryRef": "dim_wiki.language_name",
               "nativeQueryRef": "language_name"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Key Measures"
+                    }
+                  },
+                  "Property": "New Articles"
+                }
+              },
+              "queryRef": "Key Measures.New Articles",
+              "nativeQueryRef": "New Articles"
             }
           ]
         }
@@ -84,8 +84,7 @@
             },
             "direction": "Ascending"
           }
-        ],
-        "isDefaultSort": false
+        ]
       }
     },
     "visualContainerObjects": {

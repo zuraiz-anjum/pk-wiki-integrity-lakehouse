@@ -49,3 +49,4 @@ table dim_change_type
 				    Result
 
 	annotation PBI_ResultType = Table
+

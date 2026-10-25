@@ -17,11 +17,12 @@ How a run decides what to do
     flags filled in later, so nothing gets missed. The aggregates are then recomputed only for the
     days / months whose fact rows changed in this run.
   * full: everything is merged against all of silver, and gold rows silver no longer has are
-    deleted (the monthly dump handover deletes api rows in silver, gold has to follow).
+    deleted (the monthly dump handover deletes api rows in silver, gold has to follow). For the
+    dimensions that only ever removes rows whose key changed, silver itself never deletes them.
 Every write is a MERGE that only updates rows whose content changed, so a rerun is a no-op.
 
-Surrogate keys are xxhash64 of the natural key: same row, same key, on every run, without a
-lookup table. When a fact can't find its page or editor version it points at the unknown member
+Surrogate keys are xxhash64 of the natural key with the sign bit cleared: same row, same key,
+on every run, without a lookup table. When a fact can't find its page or editor version it points at the unknown member
 of its wiki, whose key is minus the wiki_key (-1 for urwiki ... -4 for pswiki).
 """
 from functools import reduce
@@ -99,7 +100,9 @@ def wiki_key_of(col):
 
 
 def sk(*cols):
-    return F.xxhash64(F.concat_ws("|", *[F.col(c).cast("string") for c in cols]))
+    # xxhash64 is signed, so half the hashes would be negative and look like an unknown member.
+    # clearing the sign bit keeps every real key >= 0 (63 bits is still plenty against collisions)
+    return F.xxhash64(F.concat_ws("|", *[F.col(c).cast("string") for c in cols]))         .bitwiseAND(F.lit(0x7FFFFFFFFFFFFFFF))
 
 
 def date_key(col):
@@ -280,7 +283,8 @@ def load_dim_page(spark, cfg, run, full, source_param):
              .withColumn("namespace_name", F.when(ns.isNull(), F.lit(None)).otherwise(F.coalesce(ns_name, F.lit("Other"))))
              .withColumn("is_content_page", ns == 0))
         m["rows_inserted"], m["rows_updated"], m["rows_deleted"] = merge_gold(
-            spark, cfg, "gold_dim_page", with_lineage(d, sc.GOLD_DIM_PAGE, run))
+            spark, cfg, "gold_dim_page", with_lineage(d, sc.GOLD_DIM_PAGE, run),
+            delete_when="true" if full else None)
         move_watermark(spark, cfg, run, "silver_page", "gold_dim_page")
 
 
@@ -299,7 +303,8 @@ def load_dim_editor(spark, cfg, run, full, source_param):
              .unionByName(unknown_members(spark, "editor"), allowMissingColumns=True)
              .withColumn("is_anonymous", F.col("editor_type").isin("ip", "temporary")))
         m["rows_inserted"], m["rows_updated"], m["rows_deleted"] = merge_gold(
-            spark, cfg, "gold_dim_editor", with_lineage(d, sc.GOLD_DIM_EDITOR, run))
+            spark, cfg, "gold_dim_editor", with_lineage(d, sc.GOLD_DIM_EDITOR, run),
+            delete_when="true" if full else None)
         move_watermark(spark, cfg, run, "silver_editor", "gold_dim_editor")
 
 

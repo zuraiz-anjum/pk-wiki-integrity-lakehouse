@@ -1,0 +1,13 @@
+change_type_key,entity,change_type,description,load_timestamp
+1,revision,create,first revision of a page,2026-10-25 19:56:25.209334
+2,revision,revert,restored an earlier version of the page,2026-10-25 19:56:25.209334
+3,revision,minor,marked as a minor edit,2026-10-25 19:56:25.209334
+4,revision,edit,any other edit,2026-10-25 19:56:25.209334
+11,page_event,create,page created (log entry),2026-10-25 19:56:25.209334
+12,page_event,move,page renamed,2026-10-25 19:56:25.209334
+13,page_event,delete,page deleted,2026-10-25 19:56:25.209334
+14,page_event,restore,deleted page restored,2026-10-25 19:56:25.209334
+15,page_event,protect,"protection added, changed or removed",2026-10-25 19:56:25.209334
+16,page_event,upload,file uploaded,2026-10-25 19:56:25.209334
+17,page_event,merge,page histories merged,2026-10-25 19:56:25.209334
+18,page_event,other,any other page log entry,2026-10-25 19:56:25.209334

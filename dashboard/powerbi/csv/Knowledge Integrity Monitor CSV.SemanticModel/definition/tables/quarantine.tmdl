@@ -1,0 +1,75 @@
+/// Rows the pipeline rejected, with the reasons.
+table quarantine
+	lineageTag: a882d6b0-0d8d-54b7-b658-99c788e0377b
+
+	column source_table
+		dataType: string
+		lineageTag: 353ba0c5-c750-5a48-a888-cf316f5ec671
+		summarizeBy: none
+		sourceColumn: source_table
+
+		annotation SummarizationSetBy = User
+
+	column record_hash
+		dataType: string
+		isHidden
+		lineageTag: 64913f12-24d0-5d5a-ad63-a52fad8cc0ab
+		summarizeBy: none
+		sourceColumn: record_hash
+
+		annotation SummarizationSetBy = User
+
+	column wiki
+		dataType: string
+		lineageTag: a4f3ee6d-d847-5e00-9b6e-e93dc5d45392
+		summarizeBy: none
+		sourceColumn: wiki
+
+		annotation SummarizationSetBy = User
+
+	column batch_ref
+		dataType: string
+		lineageTag: b6132bfe-588e-57d4-8897-13799327103e
+		summarizeBy: none
+		sourceColumn: batch_ref
+
+		annotation SummarizationSetBy = User
+
+	column reasons
+		dataType: string
+		lineageTag: 5ab4871c-d978-5c36-8a57-45eb855d35a8
+		summarizeBy: none
+		sourceColumn: reasons
+
+		annotation SummarizationSetBy = User
+
+	column batch_id
+		dataType: string
+		lineageTag: 7190738a-d8a3-51b6-bf19-dbc5387ad10b
+		summarizeBy: none
+		sourceColumn: batch_id
+
+		annotation SummarizationSetBy = User
+
+	column load_timestamp
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: e800e554-60b3-583b-a0f1-596fc7ae1b7d
+		summarizeBy: none
+		sourceColumn: load_timestamp
+
+		annotation SummarizationSetBy = User
+
+	partition quarantine = m
+		mode: import
+		source =
+				let
+				    FilePath = SampleFolder & "quarantine.csv",
+				    Content = try Binary.Buffer(File.Contents(FilePath)) otherwise null,
+				    Raw = if Content = null then #table({}, {}) else Csv.Document(Content, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars = true]),
+				    Result = PrepareTable(Headers, {{"source_table", "text"}, {"record_hash", "text"}, {"wiki", "text"}, {"batch_ref", "text"}, {"reasons", "text"}, {"batch_id", "text"}, {"load_timestamp", "datetime"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

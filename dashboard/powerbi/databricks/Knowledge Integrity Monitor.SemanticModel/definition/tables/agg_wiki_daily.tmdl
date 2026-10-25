@@ -1,0 +1,208 @@
+/// Daily totals per wiki, built from the two facts.
+table agg_wiki_daily
+	lineageTag: 10aedd71-397f-5a11-af66-817873a9ead1
+
+	column wiki_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c221dda1-130b-5b32-b8a8-9f260f744d60
+		summarizeBy: none
+		sourceColumn: wiki_key
+
+		annotation SummarizationSetBy = User
+
+	column date_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 08ed1c8a-7310-5805-8028-253c5faf9f10
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = User
+
+	column edits
+		dataType: int64
+		formatString: 0
+		lineageTag: b505e454-dc41-5b22-a77a-b99171061c99
+		summarizeBy: sum
+		sourceColumn: edits
+
+		annotation SummarizationSetBy = User
+
+	column human_edits
+		dataType: int64
+		formatString: 0
+		lineageTag: a898fb13-c3fb-5346-87b6-41d22db4fd80
+		summarizeBy: sum
+		sourceColumn: human_edits
+
+		annotation SummarizationSetBy = User
+
+	column bot_edits
+		dataType: int64
+		formatString: 0
+		lineageTag: f510dc68-0b96-53f5-9588-8297187e6e59
+		summarizeBy: sum
+		sourceColumn: bot_edits
+
+		annotation SummarizationSetBy = User
+
+	column bot_edit_share
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 92675801-720f-5a7a-9786-971ad4f875ab
+		summarizeBy: none
+		sourceColumn: bot_edit_share
+
+		annotation SummarizationSetBy = User
+
+	column anonymous_edits
+		dataType: int64
+		formatString: 0
+		lineageTag: 1606d248-a7dd-53d6-a689-4908a528d6fe
+		summarizeBy: sum
+		sourceColumn: anonymous_edits
+
+		annotation SummarizationSetBy = User
+
+	column new_articles
+		dataType: int64
+		formatString: 0
+		lineageTag: d3f9f999-f830-53f1-8b21-83131e1dbe63
+		summarizeBy: sum
+		sourceColumn: new_articles
+
+		annotation SummarizationSetBy = User
+
+	column pages_created
+		dataType: int64
+		formatString: 0
+		lineageTag: e3791d64-cf12-595d-b245-d0203eda9820
+		summarizeBy: sum
+		sourceColumn: pages_created
+
+		annotation SummarizationSetBy = User
+
+	column pages_deleted
+		dataType: int64
+		formatString: 0
+		lineageTag: 94629dbc-0119-54f1-8b94-61ac3b52c462
+		summarizeBy: sum
+		sourceColumn: pages_deleted
+
+		annotation SummarizationSetBy = User
+
+	column pages_restored
+		dataType: int64
+		formatString: 0
+		lineageTag: 599ecf4d-21a8-5e9d-a5c5-da2d60ff7787
+		summarizeBy: sum
+		sourceColumn: pages_restored
+
+		annotation SummarizationSetBy = User
+
+	column pages_moved
+		dataType: int64
+		formatString: 0
+		lineageTag: d7d9e165-ce74-5f0b-af3a-a916192c84c4
+		summarizeBy: sum
+		sourceColumn: pages_moved
+
+		annotation SummarizationSetBy = User
+
+	column active_editors
+		dataType: int64
+		formatString: 0
+		lineageTag: cc91069e-70c5-5a04-89c2-a380cf1db409
+		summarizeBy: sum
+		sourceColumn: active_editors
+
+		annotation SummarizationSetBy = User
+
+	column active_human_editors
+		dataType: int64
+		formatString: 0
+		lineageTag: 46b3dacd-e625-53e9-8b33-47a6bb87b6d4
+		summarizeBy: sum
+		sourceColumn: active_human_editors
+
+		annotation SummarizationSetBy = User
+
+	column reverts
+		dataType: int64
+		formatString: 0
+		lineageTag: 5fa71300-e0c8-580e-a5a4-00034441641b
+		summarizeBy: sum
+		sourceColumn: reverts
+
+		annotation SummarizationSetBy = User
+
+	column reverted_edits
+		dataType: int64
+		formatString: 0
+		lineageTag: 1a0c7782-defe-5bfc-b242-1d647bacb3e0
+		summarizeBy: sum
+		sourceColumn: reverted_edits
+
+		annotation SummarizationSetBy = User
+
+	column vandalism_suspects
+		dataType: int64
+		formatString: 0
+		lineageTag: 63d88c0e-674e-5108-9586-53443f470ff5
+		summarizeBy: sum
+		sourceColumn: vandalism_suspects
+
+		annotation SummarizationSetBy = User
+
+	column median_seconds_to_revert
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 0b5102be-ee7f-5127-8773-1c964deb5ca2
+		summarizeBy: none
+		sourceColumn: median_seconds_to_revert
+
+		annotation SummarizationSetBy = User
+
+	column bytes_added
+		dataType: int64
+		formatString: 0
+		lineageTag: 78b5a41a-4613-5c39-92cc-05111fc60b57
+		summarizeBy: sum
+		sourceColumn: bytes_added
+
+		annotation SummarizationSetBy = User
+
+	column bytes_removed
+		dataType: int64
+		formatString: 0
+		lineageTag: 885c75cb-fcec-5d43-bb2f-d87ac5c29805
+		summarizeBy: sum
+		sourceColumn: bytes_removed
+
+		annotation SummarizationSetBy = User
+
+	column net_bytes
+		dataType: int64
+		formatString: 0
+		lineageTag: cfd89f77-faec-55ea-915e-58f457fa26d3
+		summarizeBy: sum
+		sourceColumn: net_bytes
+
+		annotation SummarizationSetBy = User
+
+	partition agg_wiki_daily = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null, Implementation = "2.0"]),
+				    CatalogData = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+				    SchemaData = CatalogData{[Name = GoldSchema, Kind = "Schema"]}[Data],
+				    TableData = SchemaData{[Name = "agg_wiki_daily", Kind = "Table"]}[Data],
+				    Result = PrepareTable(TableData, {{"wiki_key", "int"}, {"date_key", "int"}, {"edits", "int"}, {"human_edits", "int"}, {"bot_edits", "int"}, {"bot_edit_share", "num"}, {"anonymous_edits", "int"}, {"new_articles", "int"}, {"pages_created", "int"}, {"pages_deleted", "int"}, {"pages_restored", "int"}, {"pages_moved", "int"}, {"active_editors", "int"}, {"active_human_editors", "int"}, {"reverts", "int"}, {"reverted_edits", "int"}, {"vandalism_suspects", "int"}, {"median_seconds_to_revert", "num"}, {"bytes_added", "int"}, {"bytes_removed", "int"}, {"net_bytes", "int"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

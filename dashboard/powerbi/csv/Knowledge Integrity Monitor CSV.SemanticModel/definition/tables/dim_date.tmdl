@@ -1,0 +1,155 @@
+/// Calendar, one row per day from 2001 to 2030. Marked as the date table.
+table dim_date
+	dataCategory: Time
+	lineageTag: ae1b747e-2e77-5adb-855c-c29758568536
+
+	column date_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 895396c9-ba41-5323-990e-8502204049e0
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = User
+
+	column date
+		dataType: dateTime
+		isKey
+		formatString: yyyy-mm-dd
+		lineageTag: 20078d73-af47-5563-8bc4-b692483c6dbe
+		summarizeBy: none
+		sourceColumn: date
+
+		annotation SummarizationSetBy = User
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column year
+		dataType: int64
+		formatString: 0
+		lineageTag: a6a786b0-2fee-5a41-9c03-9fc4f2dcadb5
+		summarizeBy: none
+		sourceColumn: year
+
+		annotation SummarizationSetBy = User
+
+	column quarter
+		dataType: int64
+		formatString: 0
+		lineageTag: 9ad03f4e-55f3-52d6-b635-d55a1157a2f2
+		summarizeBy: none
+		sourceColumn: quarter
+
+		annotation SummarizationSetBy = User
+
+	column month
+		dataType: int64
+		formatString: 0
+		lineageTag: 9fb4139f-e325-5022-ac25-473f3016d329
+		summarizeBy: none
+		sourceColumn: month
+
+		annotation SummarizationSetBy = User
+
+	column month_name
+		dataType: string
+		lineageTag: 86f9b7c0-1dc8-566b-9aa1-6bd0b938a222
+		summarizeBy: none
+		sourceColumn: month_name
+		sortByColumn: month
+
+		annotation SummarizationSetBy = User
+
+	column year_month
+		dataType: string
+		lineageTag: 7b8e9a72-5c27-5659-9935-20f1598f2cbd
+		summarizeBy: none
+		sourceColumn: year_month
+
+		annotation SummarizationSetBy = User
+
+	column month_start_date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 47eba3f5-e67d-5a05-b132-63eb24973cc1
+		summarizeBy: none
+		sourceColumn: month_start_date
+
+		annotation SummarizationSetBy = User
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column day_of_month
+		dataType: int64
+		formatString: 0
+		lineageTag: 9b61855c-9445-5d0f-9a6c-7029b4157edc
+		summarizeBy: none
+		sourceColumn: day_of_month
+
+		annotation SummarizationSetBy = User
+
+	column day_of_week
+		dataType: int64
+		formatString: 0
+		lineageTag: 2501418b-1266-5749-93be-e0c02565d0b4
+		summarizeBy: none
+		sourceColumn: day_of_week
+
+		annotation SummarizationSetBy = User
+
+	column day_name
+		dataType: string
+		lineageTag: c147b59d-5d53-5ca3-8f7f-5df9b2b1d7fc
+		summarizeBy: none
+		sourceColumn: day_name
+		sortByColumn: day_of_week
+
+		annotation SummarizationSetBy = User
+
+	column week_of_year
+		dataType: int64
+		formatString: 0
+		lineageTag: caa7d566-9416-5dae-a2a9-7012d3344e8e
+		summarizeBy: none
+		sourceColumn: week_of_year
+
+		annotation SummarizationSetBy = User
+
+	column is_weekend
+		dataType: boolean
+		lineageTag: ed07c1f0-1725-5321-ac60-36ea75d21619
+		summarizeBy: none
+		sourceColumn: is_weekend
+
+		annotation SummarizationSetBy = User
+
+	column is_pk_public_holiday
+		dataType: boolean
+		lineageTag: 4ba9d336-bd4a-5190-a4f9-2973e0f03825
+		summarizeBy: none
+		sourceColumn: is_pk_public_holiday
+
+		annotation SummarizationSetBy = User
+
+	column holiday_name
+		dataType: string
+		lineageTag: edd4829b-9e9d-5454-acb0-0b9ed2b92b8f
+		summarizeBy: none
+		sourceColumn: holiday_name
+
+		annotation SummarizationSetBy = User
+
+	partition dim_date = m
+		mode: import
+		source =
+				let
+				    FilePath = SampleFolder & "dim_date.csv",
+				    Content = try Binary.Buffer(File.Contents(FilePath)) otherwise null,
+				    Raw = if Content = null then #table({}, {}) else Csv.Document(Content, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars = true]),
+				    Result = PrepareTable(Headers, {{"date_key", "int"}, {"date", "date"}, {"year", "int"}, {"quarter", "int"}, {"month", "int"}, {"month_name", "text"}, {"year_month", "text"}, {"month_start_date", "date"}, {"day_of_month", "int"}, {"day_of_week", "int"}, {"day_name", "text"}, {"week_of_year", "int"}, {"is_weekend", "bool"}, {"is_pk_public_holiday", "bool"}, {"holiday_name", "text"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

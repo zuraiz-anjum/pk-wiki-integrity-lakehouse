@@ -1,0 +1,136 @@
+/// Contested page days (2 or more reverts). is_edit_war marks the strict Phase 1 rule.
+table agg_edit_wars
+	lineageTag: e8c5a0a8-9964-5d43-a774-b1fc09f890eb
+
+	column wiki_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 3d165ba5-9936-5211-9e6b-841daddb8c75
+		summarizeBy: none
+		sourceColumn: wiki_key
+
+		annotation SummarizationSetBy = User
+
+	column page_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 1a6e3764-d4a9-5a7a-9888-22c694f94835
+		summarizeBy: none
+		sourceColumn: page_id
+
+		annotation SummarizationSetBy = User
+
+	column date_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: cebfccd1-d459-5e20-8aa5-0d23e026c445
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = User
+
+	column page_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: bf20269c-794b-59d4-b66b-97dbdacd70aa
+		summarizeBy: none
+		sourceColumn: page_key
+
+		annotation SummarizationSetBy = User
+
+	column revert_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 894eade1-4b92-5b23-b560-73fb7d681f62
+		summarizeBy: sum
+		sourceColumn: revert_count
+
+		annotation SummarizationSetBy = User
+
+	column distinct_reverters
+		dataType: int64
+		formatString: 0
+		lineageTag: e78b3efc-a73b-5f38-9c70-97781b19cf05
+		summarizeBy: sum
+		sourceColumn: distinct_reverters
+
+		annotation SummarizationSetBy = User
+
+	column reverted_edits
+		dataType: int64
+		formatString: 0
+		lineageTag: dc21aa9f-152a-5385-9ab4-aeb0294a9dda
+		summarizeBy: sum
+		sourceColumn: reverted_edits
+
+		annotation SummarizationSetBy = User
+
+	column edits
+		dataType: int64
+		formatString: 0
+		lineageTag: 019f58ec-a81c-50ae-afc4-a954a6dcda13
+		summarizeBy: sum
+		sourceColumn: edits
+
+		annotation SummarizationSetBy = User
+
+	column distinct_editors
+		dataType: int64
+		formatString: 0
+		lineageTag: f215449d-9fe7-56ca-924e-63178d1b4c56
+		summarizeBy: sum
+		sourceColumn: distinct_editors
+
+		annotation SummarizationSetBy = User
+
+	column first_revert_ts
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 7a3320e8-1f26-59f4-a73c-4718ae7a53c5
+		summarizeBy: none
+		sourceColumn: first_revert_ts
+
+		annotation SummarizationSetBy = User
+
+	column last_revert_ts
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 8649a8a0-88f5-5a62-8651-2398c48b0a34
+		summarizeBy: none
+		sourceColumn: last_revert_ts
+
+		annotation SummarizationSetBy = User
+
+	column span_minutes
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 9f7f6a32-461d-5b50-9b35-e6492b6e3b90
+		summarizeBy: none
+		sourceColumn: span_minutes
+
+		annotation SummarizationSetBy = User
+
+	column is_edit_war
+		dataType: boolean
+		lineageTag: ddf87fbc-f6b4-5cd8-969f-9967eb151cec
+		summarizeBy: none
+		sourceColumn: is_edit_war
+
+		annotation SummarizationSetBy = User
+
+	partition agg_edit_wars = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null, Implementation = "2.0"]),
+				    CatalogData = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+				    SchemaData = CatalogData{[Name = GoldSchema, Kind = "Schema"]}[Data],
+				    TableData = SchemaData{[Name = "agg_edit_wars", Kind = "Table"]}[Data],
+				    Result = PrepareTable(TableData, {{"wiki_key", "int"}, {"page_id", "int"}, {"date_key", "int"}, {"page_key", "int"}, {"revert_count", "int"}, {"distinct_reverters", "int"}, {"reverted_edits", "int"}, {"edits", "int"}, {"distinct_editors", "int"}, {"first_revert_ts", "datetime"}, {"last_revert_ts", "datetime"}, {"span_minutes", "num"}, {"is_edit_war", "bool"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

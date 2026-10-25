@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.5.0/schema.json",
+  "name": "vandalism_kpi_5",
+  "position": {
+    "x": 852,
+    "y": 76,
+    "z": 9000,
+    "height": 96,
+    "width": 201,
+    "tabOrder": 9000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Key Measures"
+                    }
+                  },
+                  "Property": "Contested Pages"
+                }
+              },
+              "queryRef": "Key Measures.Contested Pages",
+              "nativeQueryRef": "Contested Pages"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

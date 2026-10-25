@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.5.0/schema.json",
+  "name": "vandalism_kpi_4",
+  "position": {
+    "x": 643,
+    "y": 76,
+    "z": 8000,
+    "height": 96,
+    "width": 201,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Key Measures"
+                    }
+                  },
+                  "Property": "Median Minutes to Undo Vandalism"
+                }
+              },
+              "queryRef": "Key Measures.Median Minutes to Undo Vandalism",
+              "nativeQueryRef": "Median Minutes to Undo Vandalism"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

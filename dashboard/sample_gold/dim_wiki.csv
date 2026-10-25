@@ -1,0 +1,5 @@
+wiki_key,wiki,language_name,language_native,language_code,script,site_url,temp_accounts_first_seen_ts,load_timestamp
+1,urwiki,Urdu,اردو,ur,"Urdu alphabet (Perso-Arabic, Nastaliq)",https://ur.wikipedia.org,2026-09-26 23:41:56,2026-10-25 20:30:05.783614
+2,pnbwiki,Punjabi (Shahmukhi),پنجابی,pnb,Shahmukhi (Perso-Arabic),https://pnb.wikipedia.org,,2026-10-25 19:56:06.726786
+3,sdwiki,Sindhi,سنڌي,sd,Sindhi alphabet (Perso-Arabic),https://sd.wikipedia.org,,2026-10-25 19:56:06.726786
+4,pswiki,Pashto,پښتو,ps,Pashto alphabet (Perso-Arabic),https://ps.wikipedia.org,,2026-10-25 19:56:06.726786

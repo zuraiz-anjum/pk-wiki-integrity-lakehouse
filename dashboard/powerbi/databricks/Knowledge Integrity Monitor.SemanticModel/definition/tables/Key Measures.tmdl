@@ -1,0 +1,327 @@
+/// All the report measures live here.
+table 'Key Measures'
+	lineageTag: 980d202b-371a-5548-9cb7-29db516f119e
+
+	/// Number of edits (revisions) in the current filter.
+	measure 'Total Edits' = COUNTROWS ( fact_revision )
+		formatString: #,0
+		displayFolder: Edits
+		lineageTag: f55d23f7-160d-5aa7-95b9-bf67e53e717d
+
+	/// Edits not made by bots.
+	measure 'Human Edits' = CALCULATE ( [Total Edits], fact_revision[is_bot_edit] = FALSE () )
+		formatString: #,0
+		displayFolder: Edits
+		lineageTag: bf18ab4e-dd35-5ab9-a8b5-937a4e791b44
+
+	/// Edits made by bot accounts.
+	measure 'Bot Edits' = CALCULATE ( [Total Edits], fact_revision[is_bot_edit] = TRUE () )
+		formatString: #,0
+		displayFolder: Edits
+		lineageTag: 51dce6a9-956c-5f11-9659-3d14d84be22c
+
+	/// Share of edits made by bots (Q4).
+	measure 'Bot Edit Share' = DIVIDE ( [Bot Edits], [Total Edits] )
+		formatString: 0.0%
+		displayFolder: Edits
+		lineageTag: 684a757b-5582-5146-a798-0491ba926ebd
+
+	/// Edits by IP editors or temporary accounts.
+	measure 'Anonymous Edits' = CALCULATE ( [Total Edits], fact_revision[is_anonymous_edit] = TRUE () )
+		formatString: #,0
+		displayFolder: Edits
+		lineageTag: 0b3b9c0c-3fac-5da3-8a60-8fa902c64c47
+
+	/// Share of edits made by IP editors or temporary accounts (Q5).
+	measure 'Anonymous Share' = DIVIDE ( [Anonymous Edits], [Total Edits] )
+		formatString: 0.0%
+		displayFolder: Edits
+		lineageTag: fab5c53b-e1f4-5180-9959-f6980d50f60a
+
+	/// Page creations in the article namespace that are not redirects (Q1).
+	measure 'New Articles' = CALCULATE ( [Total Edits], fact_revision[is_new_article] = TRUE () )
+		formatString: #,0
+		displayFolder: Edits
+		lineageTag: bb397a82-70a8-5e0e-b3ce-1319f3233e14
+
+	/// Page creations in any namespace.
+	measure 'Pages Created' = CALCULATE ( [Total Edits], fact_revision[is_page_creation] = TRUE () )
+		formatString: #,0
+		displayFolder: Edits
+		lineageTag: e451aba3-6ade-52d2-80f2-5c3ba76cd645
+
+	/// Bytes added minus bytes removed.
+	measure 'Net Bytes Added' = SUM ( fact_revision[bytes_diff] )
+		formatString: #,0
+		displayFolder: Edits
+		lineageTag: 65f40e3d-6880-51c1-a10e-4969ba65453e
+
+	/// Editors with at least one edit in the current filter. One person counts once per wiki, the unknown editor row is left out.
+	measure 'Active Editors' =
+			COUNTROWS (
+			    FILTER (
+			        SUMMARIZE ( fact_revision, dim_editor[wiki], dim_editor[editor_hash] ),
+			        dim_editor[editor_hash] <> "(unknown editor)"
+			    )
+			)
+		formatString: #,0
+		displayFolder: Editors
+		lineageTag: 54cc1f4a-5b40-534c-be51-53a414a0cb17
+
+	/// Editors with 5 or more edits in the current filter, the usual Wikimedia definition of active (Q1).
+	measure 'Active Editors 5+' =
+			COUNTROWS (
+			    FILTER (
+			        SUMMARIZE ( fact_revision, dim_editor[wiki], dim_editor[editor_hash] ),
+			        dim_editor[editor_hash] <> "(unknown editor)"
+			            && CALCULATE ( COUNTROWS ( fact_revision ) ) >= 5
+			    )
+			)
+		formatString: #,0
+		displayFolder: Editors
+		lineageTag: 61942c04-acea-5439-8168-c90909b774da
+
+	/// Active editors that are not bots.
+	measure 'Human Editors' = CALCULATE ( [Active Editors], fact_revision[is_bot_edit] = FALSE () )
+		formatString: #,0
+		displayFolder: Editors
+		lineageTag: 0092db3b-082a-501f-9a6e-aeb16bd82627
+
+	/// Editors whose first edit we have falls in the month (from agg_editor_monthly).
+	measure 'New Editors' = SUM ( agg_editor_monthly[new_editors] )
+		formatString: #,0
+		displayFolder: Editors
+		lineageTag: 2bacd357-fc15-508b-8e38-9a5a5fb4fb4d
+
+	/// Share of a month's editors who edited again the next month (from agg_editor_monthly).
+	measure 'Next Month Retention' = DIVIDE ( SUM ( agg_editor_monthly[returning_next_month] ), SUM ( agg_editor_monthly[editors] ) )
+		formatString: 0.0%
+		displayFolder: Editors
+		lineageTag: 027ff2d2-7806-5fa2-96b6-f8440410bee4
+
+	/// Edits that restored an earlier version of the page.
+	measure Reverts = CALCULATE ( [Total Edits], fact_revision[is_revert] = TRUE () )
+		formatString: #,0
+		displayFolder: Reverts and vandalism
+		lineageTag: f86046f8-48cb-5893-ad07-7a356eca3813
+
+	/// Edits that were later undone.
+	measure 'Reverted Edits' = CALCULATE ( [Total Edits], fact_revision[is_reverted] = TRUE () )
+		formatString: #,0
+		displayFolder: Reverts and vandalism
+		lineageTag: be4eb945-a660-5221-8b67-2c379de768e3
+
+	/// Share of edits that were later undone.
+	measure 'Revert Rate' = DIVIDE ( [Reverted Edits], [Total Edits] )
+		formatString: 0.0%
+		displayFolder: Reverts and vandalism
+		lineageTag: 79da7aab-40ae-5e76-aa64-19b5f43d66bd
+
+	/// Edits reverted within 24 hours by a different editor.
+	measure 'Vandalism Suspects' = CALCULATE ( [Total Edits], fact_revision[is_vandalism_suspect] = TRUE () )
+		formatString: #,0
+		displayFolder: Reverts and vandalism
+		lineageTag: f85308a3-2465-51f0-9537-dbcb0605ab71
+
+	/// Share of edits that are vandalism suspects.
+	measure 'Vandalism Rate' = DIVIDE ( [Vandalism Suspects], [Total Edits] )
+		formatString: 0.0%
+		displayFolder: Reverts and vandalism
+		lineageTag: 893ba24d-7dd7-5318-b851-778a746adb2e
+
+	/// Median time in minutes before a reverted edit was undone.
+	measure 'Median Minutes to Revert' =
+			VAR reverted =
+			    FILTER ( fact_revision, NOT ISBLANK ( fact_revision[seconds_to_revert] ) )
+			RETURN
+			    IF ( ISEMPTY ( reverted ), BLANK (), MEDIANX ( reverted, fact_revision[seconds_to_revert] ) / 60 )
+		formatString: #,0.0
+		displayFolder: Reverts and vandalism
+		lineageTag: 4b99d603-e270-51b1-abf5-8d0e1842753b
+
+	/// Median time in minutes before a vandalism suspect was undone (Q2).
+	measure 'Median Minutes to Undo Vandalism' =
+			VAR suspects =
+			    FILTER (
+			        fact_revision,
+			        fact_revision[is_vandalism_suspect] = TRUE ()
+			            && NOT ISBLANK ( fact_revision[seconds_to_revert] )
+			    )
+			RETURN
+			    IF ( ISEMPTY ( suspects ), BLANK (), MEDIANX ( suspects, fact_revision[seconds_to_revert] ) / 60 )
+		formatString: #,0.0
+		displayFolder: Reverts and vandalism
+		lineageTag: 5ca74850-d3c2-5561-9854-606aaa976192
+
+	/// 90th percentile of the time in minutes before a vandalism suspect was undone (Q2).
+	measure 'P90 Minutes to Undo Vandalism' =
+			VAR suspects =
+			    FILTER (
+			        fact_revision,
+			        fact_revision[is_vandalism_suspect] = TRUE ()
+			            && NOT ISBLANK ( fact_revision[seconds_to_revert] )
+			    )
+			RETURN
+			    IF (
+			        ISEMPTY ( suspects ),
+			        BLANK (),
+			        PERCENTILEX.INC ( suspects, fact_revision[seconds_to_revert], 0.9 ) / 60
+			    )
+		formatString: #,0.0
+		displayFolder: Reverts and vandalism
+		lineageTag: edd21831-d26b-51d0-a349-6c14f5e9828b
+
+	/// Page days with 2 or more reverts (Q3).
+	measure 'Contested Days' = COUNTROWS ( agg_edit_wars )
+		formatString: #,0
+		displayFolder: Edit wars
+		lineageTag: bf0af825-d09a-559b-a1d1-ec2e45867221
+
+	/// Reverts made on contested page days (Q3).
+	measure 'Contested Reverts' = SUM ( agg_edit_wars[revert_count] )
+		formatString: #,0
+		displayFolder: Edit wars
+		lineageTag: e5032a61-5eda-50dc-81ac-515b07d76a48
+
+	/// Pages that had at least one day with 2 or more reverts (Q3).
+	measure 'Contested Pages' = COUNTROWS ( SUMMARIZE ( agg_edit_wars, agg_edit_wars[wiki_key], agg_edit_wars[page_id] ) )
+		formatString: #,0
+		displayFolder: Edit wars
+		lineageTag: f40a1c98-2cdb-5891-8ce8-e036c0fccf84
+
+	/// Page days that meet the Phase 1 edit war rule: 3 or more reverts by 2 or more editors (Q3).
+	measure 'Edit War Days' = CALCULATE ( COUNTROWS ( agg_edit_wars ), agg_edit_wars[is_edit_war] = TRUE () )
+		formatString: #,0
+		displayFolder: Edit wars
+		lineageTag: 5d325f59-1659-5e41-b7c6-1dbe7828d5f0
+
+	/// Pages with at least one edit war day under the Phase 1 rule (Q3).
+	measure 'Edit War Pages' =
+			CALCULATE (
+			    COUNTROWS ( SUMMARIZE ( agg_edit_wars, agg_edit_wars[wiki_key], agg_edit_wars[page_id] ) ),
+			    agg_edit_wars[is_edit_war] = TRUE ()
+			)
+		formatString: #,0
+		displayFolder: Edit wars
+		lineageTag: 8c7dfb04-1615-5fc2-95cd-c96ce36e1ef1
+
+	/// Most editors involved on a single contested day of the page.
+	measure 'Max Editors Involved' = MAX ( agg_edit_wars[distinct_editors] )
+		formatString: #,0
+		displayFolder: Edit wars
+		lineageTag: 61473c33-9a74-53c9-8750-5f9e1a2c5129
+
+	/// Page log events (moves, deletions, restores, protections, ...).
+	measure 'Page Events' = COUNTROWS ( fact_page_event )
+		formatString: #,0
+		displayFolder: Page events
+		lineageTag: 6d6f86cf-48a5-5faf-af44-1283137d49bd
+
+	/// Page deletions.
+	measure 'Pages Deleted' = CALCULATE ( [Page Events], dim_change_type[entity] = "page_event", dim_change_type[change_type] = "delete" )
+		formatString: #,0
+		displayFolder: Page events
+		lineageTag: af17e368-389b-5de4-b51e-99c5f7f06b7c
+
+	/// Page moves (renames).
+	measure 'Page Moves' = CALCULATE ( [Page Events], dim_change_type[entity] = "page_event", dim_change_type[change_type] = "move" )
+		formatString: #,0
+		displayFolder: Page events
+		lineageTag: ce3919e4-c081-5a08-acea-8dcb827c977c
+
+	/// Number of pipeline runs (distinct run ids) in the audit log.
+	measure 'Pipeline Runs' = DISTINCTCOUNT ( pipeline_execution_logs[run_id] )
+		formatString: #,0
+		displayFolder: Pipeline
+		lineageTag: 04949f49-cfbd-5972-a9d2-2b6895b4431c
+
+	/// Rows in the audit log, one per step per run.
+	measure 'Steps Logged' = COUNTROWS ( pipeline_execution_logs )
+		formatString: #,0
+		displayFolder: Pipeline
+		lineageTag: 3130247c-dbec-56ea-a139-c95a6acae77a
+
+	/// Steps that finished with status SUCCESS.
+	measure 'Successful Steps' = CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "SUCCESS" )
+		formatString: #,0
+		displayFolder: Pipeline
+		lineageTag: 192c1651-cae0-525e-bddb-68fb01dbd997
+
+	/// Steps that finished with status FAILED.
+	measure 'Failed Steps' = CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "FAILED" )
+		formatString: #,0
+		displayFolder: Pipeline
+		lineageTag: b12c1d59-a364-54cc-9ab9-0b3fdb08b7ad
+
+	/// Steps that had nothing to do (status SKIPPED).
+	measure 'Skipped Steps' = CALCULATE ( [Steps Logged], pipeline_execution_logs[status] = "SKIPPED" )
+		formatString: #,0
+		displayFolder: Pipeline
+		lineageTag: ec9675b2-c7a1-5f28-b636-7453e0c1da95
+
+	/// Successful steps out of the steps that actually ran (skipped steps are left out).
+	measure 'Pipeline Success Rate' = DIVIDE ( [Successful Steps], [Successful Steps] + [Failed Steps] )
+		formatString: 0.0%
+		displayFolder: Pipeline
+		lineageTag: cef362cb-43eb-5007-a6ca-08aaaf0b7e8d
+
+	/// Rows the steps read from their source.
+	measure 'Rows Processed' = SUM ( pipeline_execution_logs[rows_read] )
+		formatString: #,0
+		displayFolder: Pipeline
+		lineageTag: b7906a28-02de-5aa2-ab8f-8ccb4213bb07
+
+	/// Rows inserted, updated or deleted by the MERGEs.
+	measure 'Rows Written' =
+			SUM ( pipeline_execution_logs[rows_inserted] )
+			    + SUM ( pipeline_execution_logs[rows_updated] )
+			    + SUM ( pipeline_execution_logs[rows_deleted] )
+		formatString: #,0
+		displayFolder: Pipeline
+		lineageTag: 480b313f-98d1-5bc6-91a7-f07d328bdd04
+
+	/// Average step duration in seconds.
+	measure 'Avg Step Duration (sec)' = AVERAGE ( pipeline_execution_logs[duration_sec] )
+		formatString: #,0.0
+		displayFolder: Pipeline
+		lineageTag: c7ad6ecc-8b87-5d10-a958-eb7a0b0c0a8f
+
+	/// Sum of all step durations in minutes.
+	measure 'Total Run Time (min)' = DIVIDE ( SUM ( pipeline_execution_logs[duration_sec] ), 60 )
+		formatString: #,0.0
+		displayFolder: Pipeline
+		lineageTag: 69a71ce2-c3d4-5253-b6e9-40b0a36bc64a
+
+	/// When the latest step in the audit log finished (UTC).
+	measure 'Last Run' = MAX ( pipeline_execution_logs[end_ts] )
+		formatString: yyyy-mm-dd hh:nn
+		displayFolder: Pipeline
+		lineageTag: 5bb910b1-56eb-5caf-9382-565d1a3c14be
+
+	/// Rows sitting in the quarantine table.
+	measure 'Rows Quarantined' = COUNTROWS ( quarantine )
+		formatString: #,0
+		displayFolder: Pipeline
+		lineageTag: 04758b3e-a645-5526-8774-e00adb5a1c01
+
+	/// Schema drift entries the pipeline logged.
+	measure 'Drift Events' = COUNTROWS ( schema_drift_log )
+		formatString: #,0
+		displayFolder: Pipeline
+		lineageTag: 6e1a7fcc-ca95-56b8-afb0-5ffa5fda33ac
+
+	column Value
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 72c0cc61-93cd-52d1-8a60-31321dc585c0
+		summarizeBy: none
+		sourceColumn: [Value]
+
+		annotation SummarizationSetBy = User
+
+	partition 'Key Measures' = calculated
+		mode: import
+		source = ROW ( "Value", 0 )
+
+	annotation PBI_Id = e9af66cc737c5cd8aa287b53670a6d8e

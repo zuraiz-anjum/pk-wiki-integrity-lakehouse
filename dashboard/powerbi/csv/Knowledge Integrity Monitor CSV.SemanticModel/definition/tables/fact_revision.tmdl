@@ -1,0 +1,304 @@
+/// One row per edit.
+table fact_revision
+	lineageTag: 8bd368d8-30ca-5411-b232-b90eddefcd0f
+
+	column revision_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9bd8059c-bc89-54fb-93d3-fb38df8e6b1e
+		summarizeBy: none
+		sourceColumn: revision_key
+
+		annotation SummarizationSetBy = User
+
+	column wiki_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 56904c32-1781-5906-a05f-6e5800419a2c
+		summarizeBy: none
+		sourceColumn: wiki_key
+
+		annotation SummarizationSetBy = User
+
+	column date_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 822dc68a-2c02-5cc1-9731-ad53db7b2ef4
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = User
+
+	column pkt_date_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 84a867ff-2def-588c-a6aa-cf49a5822168
+		summarizeBy: none
+		sourceColumn: pkt_date_key
+
+		annotation SummarizationSetBy = User
+
+	column page_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 2bbc8e5b-e4ab-5b6b-b024-63af2aa778ba
+		summarizeBy: none
+		sourceColumn: page_key
+
+		annotation SummarizationSetBy = User
+
+	column editor_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 21aaf566-857c-5f92-a154-adca04b5d7a9
+		summarizeBy: none
+		sourceColumn: editor_key
+
+		annotation SummarizationSetBy = User
+
+	column change_type_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 327952a1-757d-5451-a9e4-5ab01a52250a
+		summarizeBy: none
+		sourceColumn: change_type_key
+
+		annotation SummarizationSetBy = User
+
+	column rev_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 6ab34b08-dec0-507f-ba48-a9566b25e15a
+		summarizeBy: none
+		sourceColumn: rev_id
+
+		annotation SummarizationSetBy = User
+
+	column page_id
+		dataType: int64
+		formatString: 0
+		lineageTag: fb274527-5ea9-5170-ada8-dc37163e4e03
+		summarizeBy: none
+		sourceColumn: page_id
+
+		annotation SummarizationSetBy = User
+
+	column parent_rev_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 5e48133e-663a-5d61-9cb1-1ed9b6d78649
+		summarizeBy: none
+		sourceColumn: parent_rev_id
+
+		annotation SummarizationSetBy = User
+
+	column reverted_by_rev_id
+		dataType: int64
+		formatString: 0
+		lineageTag: d6483ff3-5b9e-5d09-877a-197da490f6d3
+		summarizeBy: none
+		sourceColumn: reverted_by_rev_id
+
+		annotation SummarizationSetBy = User
+
+	column rev_ts
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: aea49d92-51fb-5bd3-a7dc-d51db0d6c617
+		summarizeBy: none
+		sourceColumn: rev_ts
+
+		annotation SummarizationSetBy = User
+
+	column rev_ts_pkt
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: a7007250-b755-59d9-bd6c-86c26dae4bd1
+		summarizeBy: none
+		sourceColumn: rev_ts_pkt
+
+		annotation SummarizationSetBy = User
+
+	column rev_hour_pkt
+		dataType: int64
+		formatString: 0
+		lineageTag: 358a4dfd-f5a9-5e42-8968-28991bc41e07
+		summarizeBy: none
+		sourceColumn: rev_hour_pkt
+
+		annotation SummarizationSetBy = User
+
+	column bytes
+		dataType: int64
+		formatString: 0
+		lineageTag: 470cb613-00cb-5375-81b6-77a4a3ff6a22
+		summarizeBy: none
+		sourceColumn: bytes
+
+		annotation SummarizationSetBy = User
+
+	column bytes_diff
+		dataType: int64
+		formatString: 0
+		lineageTag: 01fda63f-4697-5e82-87b0-6ea79b4c9e30
+		summarizeBy: sum
+		sourceColumn: bytes_diff
+
+		annotation SummarizationSetBy = User
+
+	column bytes_added
+		dataType: int64
+		formatString: 0
+		lineageTag: 7b7897a6-1937-5f1c-ad56-c9bf896e4ba6
+		summarizeBy: sum
+		sourceColumn: bytes_added
+
+		annotation SummarizationSetBy = User
+
+	column bytes_removed
+		dataType: int64
+		formatString: 0
+		lineageTag: e68c0f4f-ef24-5472-a5f1-3a320091690d
+		summarizeBy: sum
+		sourceColumn: bytes_removed
+
+		annotation SummarizationSetBy = User
+
+	column seconds_to_revert
+		dataType: int64
+		formatString: 0
+		lineageTag: e2c3e23a-db99-5028-8f3a-79807d8fc324
+		summarizeBy: none
+		sourceColumn: seconds_to_revert
+
+		annotation SummarizationSetBy = User
+
+	column is_bot_edit
+		dataType: boolean
+		lineageTag: 1308d820-dca4-5427-942d-6c448abe4b3b
+		summarizeBy: none
+		sourceColumn: is_bot_edit
+
+		annotation SummarizationSetBy = User
+
+	column is_anonymous_edit
+		dataType: boolean
+		lineageTag: 63998cae-f0ee-5c64-b33c-549ff41f5777
+		summarizeBy: none
+		sourceColumn: is_anonymous_edit
+
+		annotation SummarizationSetBy = User
+
+	column is_minor
+		dataType: boolean
+		lineageTag: 06d89148-e2a1-5dba-a719-0e6f6fb79ff3
+		summarizeBy: none
+		sourceColumn: is_minor
+
+		annotation SummarizationSetBy = User
+
+	column is_page_creation
+		dataType: boolean
+		lineageTag: 111beb77-e254-59d5-8bf7-3e5471356d77
+		summarizeBy: none
+		sourceColumn: is_page_creation
+
+		annotation SummarizationSetBy = User
+
+	column is_new_article
+		dataType: boolean
+		lineageTag: d9a7d26a-0b45-58d3-8550-4e767ece4daf
+		summarizeBy: none
+		sourceColumn: is_new_article
+
+		annotation SummarizationSetBy = User
+
+	column is_revert
+		dataType: boolean
+		lineageTag: 74e90f98-7947-506c-893c-56b7beb2c3d4
+		summarizeBy: none
+		sourceColumn: is_revert
+
+		annotation SummarizationSetBy = User
+
+	column is_reverted
+		dataType: boolean
+		lineageTag: dc3e424c-e1f1-5fd6-8314-ad9086c91ec2
+		summarizeBy: none
+		sourceColumn: is_reverted
+
+		annotation SummarizationSetBy = User
+
+	column is_vandalism_suspect
+		dataType: boolean
+		lineageTag: 9dd17228-1891-5df6-a529-bab9c76d5a64
+		summarizeBy: none
+		sourceColumn: is_vandalism_suspect
+
+		annotation SummarizationSetBy = User
+
+	column is_deleted
+		dataType: boolean
+		lineageTag: 35f61f7d-4634-5bad-af78-96884fb2a979
+		summarizeBy: none
+		sourceColumn: is_deleted
+
+		annotation SummarizationSetBy = User
+
+	column source
+		dataType: string
+		lineageTag: 603f597b-983b-5664-bff7-d70836ce55da
+		summarizeBy: none
+		sourceColumn: source
+
+		annotation SummarizationSetBy = User
+
+	/// Before or after the first temporary account edit we have for that wiki (Q5).
+	column 'Temp Account Era' =
+			VAR rollout = RELATED ( dim_wiki[temp_accounts_first_seen_ts] )
+			RETURN
+			    IF (
+			        ISBLANK ( rollout ),
+			        "No temp accounts yet",
+			        IF ( fact_revision[rev_ts] < rollout, "Before temp accounts", "After temp accounts" )
+			    )
+		dataType: string
+		lineageTag: a2c8df57-5f4d-5a2f-b9d6-e96d257e0e10
+		summarizeBy: none
+		sortByColumn: 'Temp Account Era Order'
+
+		annotation SummarizationSetBy = User
+
+	/// Sort order for Temp Account Era.
+	column 'Temp Account Era Order' =
+			VAR rollout = RELATED ( dim_wiki[temp_accounts_first_seen_ts] )
+			RETURN
+			    IF ( ISBLANK ( rollout ), 3, IF ( fact_revision[rev_ts] < rollout, 1, 2 ) )
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 3a393a1e-b528-5183-990b-7a05c0c0265b
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+	partition fact_revision = m
+		mode: import
+		source =
+				let
+				    FilePath = SampleFolder & "fact_revision.csv",
+				    Content = try Binary.Buffer(File.Contents(FilePath)) otherwise null,
+				    Raw = if Content = null then #table({}, {}) else Csv.Document(Content, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars = true]),
+				    Result = PrepareTable(Headers, {{"revision_key", "int"}, {"wiki_key", "int"}, {"date_key", "int"}, {"pkt_date_key", "int"}, {"page_key", "int"}, {"editor_key", "int"}, {"change_type_key", "int"}, {"rev_id", "int"}, {"page_id", "int"}, {"parent_rev_id", "int"}, {"reverted_by_rev_id", "int"}, {"rev_ts", "datetime"}, {"rev_ts_pkt", "datetime"}, {"rev_hour_pkt", "int"}, {"bytes", "int"}, {"bytes_diff", "int"}, {"bytes_added", "int"}, {"bytes_removed", "int"}, {"seconds_to_revert", "int"}, {"is_bot_edit", "bool"}, {"is_anonymous_edit", "bool"}, {"is_minor", "bool"}, {"is_page_creation", "bool"}, {"is_new_article", "bool"}, {"is_revert", "bool"}, {"is_reverted", "bool"}, {"is_vandalism_suspect", "bool"}, {"is_deleted", "bool"}, {"source", "text"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

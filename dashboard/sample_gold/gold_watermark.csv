@@ -1,0 +1,5 @@
+target_table,source_table,last_silver_load_ts,run_id,load_timestamp
+pkwiki_gold.fact_page_event,pkwiki_silver.page_event,2026-10-25 21:04:39.257796,local-incr-2-drift,2026-10-25 21:13:31.983698
+pkwiki_gold.fact_revision,pkwiki_silver.revision,2026-10-25 21:04:02.784684,local-incr-2-drift,2026-10-25 21:12:05.288985
+pkwiki_gold.dim_editor,pkwiki_silver.editor,2026-10-25 20:28:44.183070,local-incr-1,2026-10-25 20:32:13.496224
+pkwiki_gold.dim_page,pkwiki_silver.page,2026-10-25 20:26:01.330854,local-incr-1,2026-10-25 20:31:06.717896

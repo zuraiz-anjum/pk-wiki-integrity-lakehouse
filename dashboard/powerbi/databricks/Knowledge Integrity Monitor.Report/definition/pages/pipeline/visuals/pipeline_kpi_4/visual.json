@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.5.0/schema.json",
+  "name": "pipeline_kpi_4",
+  "position": {
+    "x": 487,
+    "y": 76,
+    "z": 8000,
+    "height": 96,
+    "width": 149,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Key Measures"
+                    }
+                  },
+                  "Property": "Failed Steps"
+                }
+              },
+              "queryRef": "Key Measures.Failed Steps",
+              "nativeQueryRef": "Failed Steps"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,0 +1,190 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.5.0/schema.json",
+  "name": "pipeline_step_log",
+  "position": {
+    "x": 16,
+    "y": 452,
+    "z": 16000,
+    "height": 252,
+    "width": 828,
+    "tabOrder": 16000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "pipeline_execution_logs"
+                    }
+                  },
+                  "Property": "start_ts"
+                }
+              },
+              "queryRef": "pipeline_execution_logs.start_ts",
+              "nativeQueryRef": "start_ts"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "pipeline_execution_logs"
+                    }
+                  },
+                  "Property": "run_id"
+                }
+              },
+              "queryRef": "pipeline_execution_logs.run_id",
+              "nativeQueryRef": "run_id"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "pipeline_execution_logs"
+                    }
+                  },
+                  "Property": "layer"
+                }
+              },
+              "queryRef": "pipeline_execution_logs.layer",
+              "nativeQueryRef": "layer"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "pipeline_execution_logs"
+                    }
+                  },
+                  "Property": "target_table"
+                }
+              },
+              "queryRef": "pipeline_execution_logs.target_table",
+              "nativeQueryRef": "target_table"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "pipeline_execution_logs"
+                    }
+                  },
+                  "Property": "status"
+                }
+              },
+              "queryRef": "pipeline_execution_logs.status",
+              "nativeQueryRef": "status"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "pipeline_execution_logs"
+                    }
+                  },
+                  "Property": "rows_read"
+                }
+              },
+              "queryRef": "pipeline_execution_logs.rows_read",
+              "nativeQueryRef": "rows_read"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "pipeline_execution_logs"
+                    }
+                  },
+                  "Property": "rows_inserted"
+                }
+              },
+              "queryRef": "pipeline_execution_logs.rows_inserted",
+              "nativeQueryRef": "rows_inserted"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "pipeline_execution_logs"
+                    }
+                  },
+                  "Property": "rows_quarantined"
+                }
+              },
+              "queryRef": "pipeline_execution_logs.rows_quarantined",
+              "nativeQueryRef": "rows_quarantined"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "pipeline_execution_logs"
+                    }
+                  },
+                  "Property": "duration_sec"
+                }
+              },
+              "queryRef": "pipeline_execution_logs.duration_sec",
+              "nativeQueryRef": "duration_sec"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "pipeline_execution_logs"
+                  }
+                },
+                "Property": "start_ts"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Step log (newest first)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

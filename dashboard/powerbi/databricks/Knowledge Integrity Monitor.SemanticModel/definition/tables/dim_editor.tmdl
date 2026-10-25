@@ -1,0 +1,130 @@
+/// Editors, one row per version (SCD Type 2). Names are salted hashes, bots keep their name.
+table dim_editor
+	lineageTag: 55c5c4f9-b4e8-5742-b365-b64a4359115d
+
+	column editor_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 1b65c7a4-7778-5be2-868b-5ccd9357cf68
+		summarizeBy: none
+		sourceColumn: editor_key
+
+		annotation SummarizationSetBy = User
+
+	column editor_sk
+		dataType: string
+		isHidden
+		lineageTag: 60166344-559e-5f95-8417-192096da335b
+		summarizeBy: none
+		sourceColumn: editor_sk
+
+		annotation SummarizationSetBy = User
+
+	column wiki_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 1a1872a1-e342-58d1-a4b5-32aeb4ac74a2
+		summarizeBy: none
+		sourceColumn: wiki_key
+
+		annotation SummarizationSetBy = User
+
+	column wiki
+		dataType: string
+		lineageTag: f5215d3a-5946-57c0-a2be-1d0f5cdcd908
+		summarizeBy: none
+		sourceColumn: wiki
+
+		annotation SummarizationSetBy = User
+
+	column editor_hash
+		dataType: string
+		lineageTag: 7bee1cc8-31dc-53fa-b7bb-5305b9050466
+		summarizeBy: none
+		sourceColumn: editor_hash
+
+		annotation SummarizationSetBy = User
+
+	column editor_type
+		dataType: string
+		lineageTag: 7cf22eb2-344d-51c8-a3d1-adc739cb5312
+		summarizeBy: none
+		sourceColumn: editor_type
+
+		annotation SummarizationSetBy = User
+
+	column is_bot
+		dataType: boolean
+		lineageTag: 158eea72-a1b7-5225-be11-c953ade5c45c
+		summarizeBy: none
+		sourceColumn: is_bot
+
+		annotation SummarizationSetBy = User
+
+	column is_anonymous
+		dataType: boolean
+		lineageTag: 4874525b-7413-52d2-921b-cf49b7b8467a
+		summarizeBy: none
+		sourceColumn: is_anonymous
+
+		annotation SummarizationSetBy = User
+
+	column registration_ts
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 2d07a3ac-cdde-55e5-afd7-bef1eb348993
+		summarizeBy: none
+		sourceColumn: registration_ts
+
+		annotation SummarizationSetBy = User
+
+	column first_seen_ts
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 23b1d6dd-7e26-5c1c-b85b-a2c18e6b8928
+		summarizeBy: none
+		sourceColumn: first_seen_ts
+
+		annotation SummarizationSetBy = User
+
+	column valid_from
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 11edac45-9404-5994-ab90-3b5878cbd568
+		summarizeBy: none
+		sourceColumn: valid_from
+
+		annotation SummarizationSetBy = User
+
+	column valid_to
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 6bf2e249-8731-512f-a37b-89f327e126c4
+		summarizeBy: none
+		sourceColumn: valid_to
+
+		annotation SummarizationSetBy = User
+
+	column is_current
+		dataType: boolean
+		lineageTag: afeb9c57-8b31-506c-bdfb-fe0b993d32b9
+		summarizeBy: none
+		sourceColumn: is_current
+
+		annotation SummarizationSetBy = User
+
+	partition dim_editor = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null, Implementation = "2.0"]),
+				    CatalogData = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+				    SchemaData = CatalogData{[Name = GoldSchema, Kind = "Schema"]}[Data],
+				    TableData = SchemaData{[Name = "dim_editor", Kind = "Table"]}[Data],
+				    Result = PrepareTable(TableData, {{"editor_key", "int"}, {"editor_sk", "text"}, {"wiki_key", "int"}, {"wiki", "text"}, {"editor_hash", "text"}, {"editor_type", "text"}, {"is_bot", "bool"}, {"is_anonymous", "bool"}, {"registration_ts", "datetime"}, {"first_seen_ts", "datetime"}, {"valid_from", "datetime"}, {"valid_to", "datetime"}, {"is_current", "bool"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

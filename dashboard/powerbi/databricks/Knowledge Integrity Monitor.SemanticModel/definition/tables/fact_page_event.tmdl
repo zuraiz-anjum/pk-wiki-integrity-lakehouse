@@ -1,0 +1,149 @@
+/// One row per page log event (create, move, delete, restore, protect, ...).
+table fact_page_event
+	lineageTag: c046fab0-8d8d-59c7-a65c-7e8b3695b86a
+
+	column page_event_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 676156d4-8fc0-534a-a0b6-0227821a6449
+		summarizeBy: none
+		sourceColumn: page_event_key
+
+		annotation SummarizationSetBy = User
+
+	column wiki_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: b6f4cef5-e87c-5f52-8c7a-866019d1431e
+		summarizeBy: none
+		sourceColumn: wiki_key
+
+		annotation SummarizationSetBy = User
+
+	column date_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 82478a5a-96f6-5018-971b-ba15a1556711
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = User
+
+	column pkt_date_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 2784e4cc-a2a3-5786-9006-f352c6d6d1ff
+		summarizeBy: none
+		sourceColumn: pkt_date_key
+
+		annotation SummarizationSetBy = User
+
+	column page_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: fc23217f-07d9-50bb-921d-ca6d83c04d2a
+		summarizeBy: none
+		sourceColumn: page_key
+
+		annotation SummarizationSetBy = User
+
+	column editor_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: fd69e8e8-8813-5ab9-9cec-04de595f92e7
+		summarizeBy: none
+		sourceColumn: editor_key
+
+		annotation SummarizationSetBy = User
+
+	column change_type_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 066a14d4-2819-5a78-948e-08b8f25ca4f1
+		summarizeBy: none
+		sourceColumn: change_type_key
+
+		annotation SummarizationSetBy = User
+
+	column event_key
+		dataType: string
+		isHidden
+		lineageTag: c1dc1343-66c3-5d61-a138-0d0c1fc05f2a
+		summarizeBy: none
+		sourceColumn: event_key
+
+		annotation SummarizationSetBy = User
+
+	column log_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 1820b6f1-d157-5448-801a-639188cdd4af
+		summarizeBy: none
+		sourceColumn: log_id
+
+		annotation SummarizationSetBy = User
+
+	column page_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 195c45f0-3f0f-5e0b-a406-a54f8d5210b6
+		summarizeBy: none
+		sourceColumn: page_id
+
+		annotation SummarizationSetBy = User
+
+	column page_namespace
+		dataType: int64
+		formatString: 0
+		lineageTag: b1431561-2394-592b-a174-a167a6bd127b
+		summarizeBy: none
+		sourceColumn: page_namespace
+
+		annotation SummarizationSetBy = User
+
+	column event_ts
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 74865af6-9ee5-564a-a4ae-0ede913caccb
+		summarizeBy: none
+		sourceColumn: event_ts
+
+		annotation SummarizationSetBy = User
+
+	column event_ts_pkt
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: ec0757e5-1d15-5b6d-b356-5df490c1257f
+		summarizeBy: none
+		sourceColumn: event_ts_pkt
+
+		annotation SummarizationSetBy = User
+
+	column source
+		dataType: string
+		lineageTag: 97f114d2-f778-5f01-b8be-d76e6d6302dd
+		summarizeBy: none
+		sourceColumn: source
+
+		annotation SummarizationSetBy = User
+
+	partition fact_page_event = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null, Implementation = "2.0"]),
+				    CatalogData = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+				    SchemaData = CatalogData{[Name = GoldSchema, Kind = "Schema"]}[Data],
+				    TableData = SchemaData{[Name = "fact_page_event", Kind = "Table"]}[Data],
+				    Result = PrepareTable(TableData, {{"page_event_key", "int"}, {"wiki_key", "int"}, {"date_key", "int"}, {"pkt_date_key", "int"}, {"page_key", "int"}, {"editor_key", "int"}, {"change_type_key", "int"}, {"event_key", "text"}, {"log_id", "int"}, {"page_id", "int"}, {"page_namespace", "int"}, {"event_ts", "datetime"}, {"event_ts_pkt", "datetime"}, {"source", "text"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

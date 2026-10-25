@@ -1,0 +1,99 @@
+/// Time to revert per wiki, month and editor type.
+table agg_revert_latency
+	lineageTag: 31dcf827-16c3-522b-8e85-6aab1ea8bff9
+
+	column wiki_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7cf32fbc-67fb-5851-b8b7-e5bb15a2b44a
+		summarizeBy: none
+		sourceColumn: wiki_key
+
+		annotation SummarizationSetBy = User
+
+	column month_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 2edd900b-1e52-5cb4-a112-ba6dca0f34f4
+		summarizeBy: none
+		sourceColumn: month_key
+
+		annotation SummarizationSetBy = User
+
+	column editor_type
+		dataType: string
+		lineageTag: 4552f16b-9d1a-5d63-9666-b33d11fd025d
+		summarizeBy: none
+		sourceColumn: editor_type
+
+		annotation SummarizationSetBy = User
+
+	column reverted_edits
+		dataType: int64
+		formatString: 0
+		lineageTag: 4f541eaa-99a0-5a5a-a65d-1a23c77481ed
+		summarizeBy: sum
+		sourceColumn: reverted_edits
+
+		annotation SummarizationSetBy = User
+
+	column vandalism_suspects
+		dataType: int64
+		formatString: 0
+		lineageTag: 979fc86a-13bf-581f-a626-698b5e867276
+		summarizeBy: sum
+		sourceColumn: vandalism_suspects
+
+		annotation SummarizationSetBy = User
+
+	column median_seconds_to_revert
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 6e02b8e7-e1ad-57fc-8327-4109293b3015
+		summarizeBy: none
+		sourceColumn: median_seconds_to_revert
+
+		annotation SummarizationSetBy = User
+
+	column p90_seconds_to_revert
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 356787f3-0fb8-5d76-9bed-d4d42136c801
+		summarizeBy: none
+		sourceColumn: p90_seconds_to_revert
+
+		annotation SummarizationSetBy = User
+
+	column avg_seconds_to_revert
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 8750aaf4-94e2-5902-a3e7-686361f1a475
+		summarizeBy: none
+		sourceColumn: avg_seconds_to_revert
+
+		annotation SummarizationSetBy = User
+
+	column median_minutes_to_revert
+		dataType: double
+		formatString: #,0.00
+		lineageTag: e7203b5c-c4ea-54a4-b5d9-fc38655dd5a7
+		summarizeBy: none
+		sourceColumn: median_minutes_to_revert
+
+		annotation SummarizationSetBy = User
+
+	partition agg_revert_latency = m
+		mode: import
+		source =
+				let
+				    FilePath = SampleFolder & "agg_revert_latency.csv",
+				    Content = try Binary.Buffer(File.Contents(FilePath)) otherwise null,
+				    Raw = if Content = null then #table({}, {}) else Csv.Document(Content, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars = true]),
+				    Result = PrepareTable(Headers, {{"wiki_key", "int"}, {"month_key", "int"}, {"editor_type", "text"}, {"reverted_edits", "int"}, {"vandalism_suspects", "int"}, {"median_seconds_to_revert", "num"}, {"p90_seconds_to_revert", "num"}, {"avg_seconds_to_revert", "num"}, {"median_minutes_to_revert", "num"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

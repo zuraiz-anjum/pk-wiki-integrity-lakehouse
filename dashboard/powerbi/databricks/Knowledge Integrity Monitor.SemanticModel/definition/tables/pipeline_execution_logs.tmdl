@@ -1,0 +1,154 @@
+/// Audit log, one row per pipeline step per run.
+table pipeline_execution_logs
+	lineageTag: e5a840f6-f168-5d8a-8349-cb574c3a1b3d
+
+	column log_id
+		dataType: string
+		isHidden
+		lineageTag: 4efc280f-8af8-5fb9-8e2e-6a503ab530c0
+		summarizeBy: none
+		sourceColumn: log_id
+
+		annotation SummarizationSetBy = User
+
+	column run_id
+		dataType: string
+		lineageTag: bed48e9c-e199-539d-b547-503793d1af5a
+		summarizeBy: none
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = User
+
+	column layer
+		dataType: string
+		lineageTag: 7cd55e0f-23ef-5c1e-ba03-f309b399c722
+		summarizeBy: none
+		sourceColumn: layer
+
+		annotation SummarizationSetBy = User
+
+	column load_type
+		dataType: string
+		lineageTag: ec883a06-c772-5c3b-aba2-960f2d555524
+		summarizeBy: none
+		sourceColumn: load_type
+
+		annotation SummarizationSetBy = User
+
+	column target_table
+		dataType: string
+		lineageTag: 6a2a9e34-80a8-5227-832a-bee09d828081
+		summarizeBy: none
+		sourceColumn: target_table
+
+		annotation SummarizationSetBy = User
+
+	column source_param
+		dataType: string
+		lineageTag: ed106ce2-9c31-589c-9f0b-2deff0df39d1
+		summarizeBy: none
+		sourceColumn: source_param
+
+		annotation SummarizationSetBy = User
+
+	column start_ts
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: d91565ed-8e76-54e4-82b2-78d2a9d0426e
+		summarizeBy: none
+		sourceColumn: start_ts
+
+		annotation SummarizationSetBy = User
+
+	column end_ts
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: a49adac5-c5d3-555b-8549-07d64b4c1c95
+		summarizeBy: none
+		sourceColumn: end_ts
+
+		annotation SummarizationSetBy = User
+
+	column duration_sec
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 614dea07-5c13-5ed0-8e05-cd49756f05c1
+		summarizeBy: none
+		sourceColumn: duration_sec
+
+		annotation SummarizationSetBy = User
+
+	column status
+		dataType: string
+		lineageTag: 4762ef11-cfc5-5869-bc1d-3015082949fd
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = User
+
+	column rows_read
+		dataType: int64
+		formatString: 0
+		lineageTag: af9d48bc-7ca1-5f2a-855f-5d5815d6ffa8
+		summarizeBy: sum
+		sourceColumn: rows_read
+
+		annotation SummarizationSetBy = User
+
+	column rows_inserted
+		dataType: int64
+		formatString: 0
+		lineageTag: 79625d49-cf43-538f-bb9e-7eaa4b77ec17
+		summarizeBy: sum
+		sourceColumn: rows_inserted
+
+		annotation SummarizationSetBy = User
+
+	column rows_updated
+		dataType: int64
+		formatString: 0
+		lineageTag: 2b38b564-3884-5767-8ece-12afa5a8136b
+		summarizeBy: sum
+		sourceColumn: rows_updated
+
+		annotation SummarizationSetBy = User
+
+	column rows_deleted
+		dataType: int64
+		formatString: 0
+		lineageTag: 405f6c9d-bafc-57e9-810a-5934af95602e
+		summarizeBy: sum
+		sourceColumn: rows_deleted
+
+		annotation SummarizationSetBy = User
+
+	column rows_quarantined
+		dataType: int64
+		formatString: 0
+		lineageTag: 9c1ea598-4ecf-5447-99be-81031ac53baf
+		summarizeBy: sum
+		sourceColumn: rows_quarantined
+
+		annotation SummarizationSetBy = User
+
+	column error_message
+		dataType: string
+		lineageTag: b8af31a0-817f-53f8-bcfb-59fb1dbc49cc
+		summarizeBy: none
+		sourceColumn: error_message
+
+		annotation SummarizationSetBy = User
+
+	partition pipeline_execution_logs = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null, Implementation = "2.0"]),
+				    CatalogData = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+				    SchemaData = CatalogData{[Name = OpsSchema, Kind = "Schema"]}[Data],
+				    TableData = SchemaData{[Name = "pipeline_execution_logs", Kind = "Table"]}[Data],
+				    Result = PrepareTable(TableData, {{"log_id", "text"}, {"run_id", "text"}, {"layer", "text"}, {"load_type", "text"}, {"target_table", "text"}, {"source_param", "text"}, {"start_ts", "datetime"}, {"end_ts", "datetime"}, {"duration_sec", "num"}, {"status", "text"}, {"rows_read", "int"}, {"rows_inserted", "int"}, {"rows_updated", "int"}, {"rows_deleted", "int"}, {"rows_quarantined", "int"}, {"error_message", "text"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

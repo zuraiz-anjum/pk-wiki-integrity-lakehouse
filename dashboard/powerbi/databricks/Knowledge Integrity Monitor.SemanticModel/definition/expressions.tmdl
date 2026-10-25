@@ -1,0 +1,58 @@
+/// Server Hostname of the SQL warehouse (Connection details tab).
+expression DatabricksHost = "dbc-f8a0f45c-f7da.cloud.databricks.com" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+	lineageTag: 1686b4cc-b50d-549d-812f-6f41a3f7c540
+
+	annotation PBI_ResultType = Text
+
+/// HTTP Path of the SQL warehouse (Connection details tab).
+expression DatabricksHttpPath = "/sql/1.0/warehouses/9af9b3eed023027a" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+	lineageTag: 450ecdf0-a011-5e01-8940-d911eb7457f1
+
+	annotation PBI_ResultType = Text
+
+/// Unity Catalog catalog that holds the schemas.
+expression DatabricksCatalog = "workspace" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+	lineageTag: 9415801c-01b4-5a87-8d70-befd79246543
+
+	annotation PBI_ResultType = Text
+
+/// Schema with the Gold star schema.
+expression GoldSchema = "pkwiki_gold" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+	lineageTag: fa38daa1-b45d-511e-ae68-696989fa5940
+
+	annotation PBI_ResultType = Text
+
+/// Schema with the audit, quarantine and drift tables.
+expression OpsSchema = "pkwiki_ops" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+	lineageTag: f3fc3c6b-a221-5cf7-9451-e66e1e8c0d8b
+
+	annotation PBI_ResultType = Text
+
+/// Picks the columns the model needs and gives them the right types. Works for Databricks and CSV input.
+expression PrepareTable =
+		(source as table, columns as list) as table =>
+		let
+		    Names = List.Transform(columns, each _{0}),
+		    Picked = Table.SelectColumns(source, Names, MissingField.UseNull),
+		    IsBlank = (v) => v = null or (v is text and Text.Trim(v) = ""),
+		    ToInt = (v) => if IsBlank(v) then null else if v is number then Int64.From(v) else Int64.From(Text.Trim(Text.From(v)), "en-US"),
+		    ToNum = (v) => if IsBlank(v) then null else if v is number then v else Number.From(Text.Trim(Text.From(v)), "en-US"),
+		    ToBool = (v) => if IsBlank(v) then null else if v is logical then v else Text.Lower(Text.Trim(Text.From(v))) = "true",
+		    ToDateTime = (v) => if IsBlank(v) then null else if v is datetimezone then DateTimeZone.RemoveZone(v) else if v is datetime then v else if v is date then DateTime.From(v) else DateTime.From(Text.Trim(Text.From(v)), "en-US"),
+		    ToDate = (v) => if IsBlank(v) then null else if v is date then v else if v is datetime then Date.From(v) else if v is datetimezone then Date.From(DateTimeZone.RemoveZone(v)) else Date.From(Text.Trim(Text.From(v)), "en-US"),
+		    ToText = (v) => if v = null then null else if v is text then v else if v is list then Text.Combine(List.Transform(v, Text.From), "; ") else Text.From(v),
+		    Converters = [
+		        int = {ToInt, Int64.Type},
+		        num = {ToNum, type number},
+		        bool = {ToBool, type logical},
+		        datetime = {ToDateTime, type datetime},
+		        date = {ToDate, type date},
+		        text = {ToText, type text}
+		    ],
+		    Steps = List.Transform(columns, each {_{0}, Record.Field(Converters, _{1}){0}, Record.Field(Converters, _{1}){1}}),
+		    Typed = Table.TransformColumns(Picked, Steps)
+		in
+		    Typed
+	lineageTag: 1dcfc397-6cb7-5eac-8d14-e42279668f2e
+
+	annotation PBI_ResultType = Function

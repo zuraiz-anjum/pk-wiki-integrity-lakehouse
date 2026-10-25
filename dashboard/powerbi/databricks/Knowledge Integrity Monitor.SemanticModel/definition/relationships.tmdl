@@ -1,0 +1,85 @@
+relationship 3311cc20-7b45-54a0-923c-37be77da669c
+	fromColumn: fact_revision.wiki_key
+	toColumn: dim_wiki.wiki_key
+
+relationship 0ee2fa91-f605-52ae-ae0a-8f07589d7f4a
+	fromColumn: fact_revision.date_key
+	toColumn: dim_date.date_key
+
+relationship 5bf6cfc8-7c36-52fb-b06f-6a9fdf080d5c
+	isActive: false
+	fromColumn: fact_revision.pkt_date_key
+	toColumn: dim_date.date_key
+
+relationship fb8d1792-ea9d-5813-a1ea-c60e0de5dcf0
+	fromColumn: fact_revision.page_key
+	toColumn: dim_page.page_key
+
+relationship 94614fd5-c0a2-5b71-9355-4cbd9ad198c2
+	fromColumn: fact_revision.editor_key
+	toColumn: dim_editor.editor_key
+
+relationship cf5d18ad-5d55-5b80-aa46-57eee2984843
+	fromColumn: fact_revision.change_type_key
+	toColumn: dim_change_type.change_type_key
+
+relationship 2c23226e-d28a-5d05-bd63-70d2a57f581c
+	fromColumn: fact_page_event.wiki_key
+	toColumn: dim_wiki.wiki_key
+
+relationship 8cb29c56-e36e-5367-a64d-40b621ecdf44
+	fromColumn: fact_page_event.date_key
+	toColumn: dim_date.date_key
+
+relationship 425c7bf2-620e-5578-a349-4c2db98c1ef2
+	isActive: false
+	fromColumn: fact_page_event.pkt_date_key
+	toColumn: dim_date.date_key
+
+relationship d578dc31-dce4-51a5-8bce-c723fc49adb4
+	fromColumn: fact_page_event.page_key
+	toColumn: dim_page.page_key
+
+relationship 97eacea1-075d-5574-9f8d-400bf96e8378
+	fromColumn: fact_page_event.editor_key
+	toColumn: dim_editor.editor_key
+
+relationship 34f5cd79-d226-5d7b-bd5b-2f84c176e84b
+	fromColumn: fact_page_event.change_type_key
+	toColumn: dim_change_type.change_type_key
+
+relationship 9cf48b8e-9781-56bd-b58e-da9a57fd9f5a
+	fromColumn: agg_wiki_daily.wiki_key
+	toColumn: dim_wiki.wiki_key
+
+relationship e3e1c34f-57b6-5cdf-bb5d-ff4e2eb97806
+	fromColumn: agg_wiki_daily.date_key
+	toColumn: dim_date.date_key
+
+relationship 63097d53-e303-5c85-84c2-5984daa5adc9
+	fromColumn: agg_revert_latency.wiki_key
+	toColumn: dim_wiki.wiki_key
+
+relationship acbf2614-ac08-53c4-8c7a-2a525fe7d7d6
+	fromColumn: agg_revert_latency.month_key
+	toColumn: dim_date.date_key
+
+relationship 3f14671c-dec6-5db9-b7cb-71813d18596e
+	fromColumn: agg_edit_wars.wiki_key
+	toColumn: dim_wiki.wiki_key
+
+relationship 61553e2d-788a-5c92-9823-5a963241b341
+	fromColumn: agg_edit_wars.date_key
+	toColumn: dim_date.date_key
+
+relationship 46870aca-78fc-5243-9a54-e4581edb4e16
+	fromColumn: agg_edit_wars.page_key
+	toColumn: dim_page.page_key
+
+relationship 60d60566-0b44-5e56-b49b-f86a9c9010dc
+	fromColumn: agg_editor_monthly.wiki_key
+	toColumn: dim_wiki.wiki_key
+
+relationship 60cf96de-9b74-51a8-9b0a-05222496ba3a
+	fromColumn: agg_editor_monthly.month_key
+	toColumn: dim_date.date_key

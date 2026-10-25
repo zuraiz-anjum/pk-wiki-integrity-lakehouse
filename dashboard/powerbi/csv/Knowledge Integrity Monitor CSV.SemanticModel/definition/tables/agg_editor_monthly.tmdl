@@ -1,0 +1,108 @@
+/// Monthly editor counts per wiki (human and bot), with retention.
+table agg_editor_monthly
+	lineageTag: 57220454-218c-59dc-8874-f33847406a34
+
+	column wiki_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: f55271b1-27e4-5b6e-954e-f315d4456088
+		summarizeBy: none
+		sourceColumn: wiki_key
+
+		annotation SummarizationSetBy = User
+
+	column month_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7a5238ec-c7f9-564c-a516-255306c89a04
+		summarizeBy: none
+		sourceColumn: month_key
+
+		annotation SummarizationSetBy = User
+
+	column editor_group
+		dataType: string
+		lineageTag: 3adb60a7-098f-50bb-9d5b-41cbd7db73d3
+		summarizeBy: none
+		sourceColumn: editor_group
+
+		annotation SummarizationSetBy = User
+
+	column editors
+		dataType: int64
+		formatString: 0
+		lineageTag: 6d4304f6-99ab-5f30-815e-df995f406225
+		summarizeBy: sum
+		sourceColumn: editors
+
+		annotation SummarizationSetBy = User
+
+	column active_editors
+		dataType: int64
+		formatString: 0
+		lineageTag: 99154a8d-3f33-53a1-8591-416206ece736
+		summarizeBy: sum
+		sourceColumn: active_editors
+
+		annotation SummarizationSetBy = User
+
+	column very_active_editors
+		dataType: int64
+		formatString: 0
+		lineageTag: 525caf31-7306-5be4-b8a4-9134e4977733
+		summarizeBy: sum
+		sourceColumn: very_active_editors
+
+		annotation SummarizationSetBy = User
+
+	column new_editors
+		dataType: int64
+		formatString: 0
+		lineageTag: 07c55a8f-edf8-5f8d-925a-2a16c37cf5f4
+		summarizeBy: sum
+		sourceColumn: new_editors
+
+		annotation SummarizationSetBy = User
+
+	column returning_next_month
+		dataType: int64
+		formatString: 0
+		lineageTag: 986ebaf0-860e-542b-b002-26a338768e79
+		summarizeBy: sum
+		sourceColumn: returning_next_month
+
+		annotation SummarizationSetBy = User
+
+	column active_returning_next_month
+		dataType: int64
+		formatString: 0
+		lineageTag: 78cf7ef5-fa64-5f6d-9285-13abcd3619fd
+		summarizeBy: sum
+		sourceColumn: active_returning_next_month
+
+		annotation SummarizationSetBy = User
+
+	column edits
+		dataType: int64
+		formatString: 0
+		lineageTag: 7be3d6e4-6d9d-5497-9c62-48363bf20258
+		summarizeBy: sum
+		sourceColumn: edits
+
+		annotation SummarizationSetBy = User
+
+	partition agg_editor_monthly = m
+		mode: import
+		source =
+				let
+				    FilePath = SampleFolder & "agg_editor_monthly.csv",
+				    Content = try Binary.Buffer(File.Contents(FilePath)) otherwise null,
+				    Raw = if Content = null then #table({}, {}) else Csv.Document(Content, [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars = true]),
+				    Result = PrepareTable(Headers, {{"wiki_key", "int"}, {"month_key", "int"}, {"editor_group", "text"}, {"editors", "int"}, {"active_editors", "int"}, {"very_active_editors", "int"}, {"new_editors", "int"}, {"returning_next_month", "int"}, {"active_returning_next_month", "int"}, {"edits", "int"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

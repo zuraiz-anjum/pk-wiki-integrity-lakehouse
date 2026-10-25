@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.5.0/schema.json",
+  "name": "pipeline_kpi_3",
+  "position": {
+    "x": 330,
+    "y": 76,
+    "z": 7000,
+    "height": 96,
+    "width": 149,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Key Measures"
+                    }
+                  },
+                  "Property": "Pipeline Success Rate"
+                }
+              },
+              "queryRef": "Key Measures.Pipeline Success Rate",
+              "nativeQueryRef": "Pipeline Success Rate"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

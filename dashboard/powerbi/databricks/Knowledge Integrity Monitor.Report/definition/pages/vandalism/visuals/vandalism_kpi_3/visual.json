@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.5.0/schema.json",
+  "name": "vandalism_kpi_3",
+  "position": {
+    "x": 434,
+    "y": 76,
+    "z": 7000,
+    "height": 96,
+    "width": 201,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Key Measures"
+                    }
+                  },
+                  "Property": "Vandalism Suspects"
+                }
+              },
+              "queryRef": "Key Measures.Vandalism Suspects",
+              "nativeQueryRef": "Vandalism Suspects"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

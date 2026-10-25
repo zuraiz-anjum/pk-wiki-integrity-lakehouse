@@ -1,0 +1,111 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.5.0/schema.json",
+  "name": "vandalism_latency_by_type",
+  "position": {
+    "x": 16,
+    "y": 184,
+    "z": 11000,
+    "height": 260,
+    "width": 412,
+    "tabOrder": 11000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_editor"
+                    }
+                  },
+                  "Property": "editor_type"
+                }
+              },
+              "queryRef": "dim_editor.editor_type",
+              "nativeQueryRef": "editor_type",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Key Measures"
+                    }
+                  },
+                  "Property": "Median Minutes to Undo Vandalism"
+                }
+              },
+              "queryRef": "Key Measures.Median Minutes to Undo Vandalism",
+              "nativeQueryRef": "Median Minutes to Undo Vandalism"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Key Measures"
+                    }
+                  },
+                  "Property": "P90 Minutes to Undo Vandalism"
+                }
+              },
+              "queryRef": "Key Measures.P90 Minutes to Undo Vandalism",
+              "nativeQueryRef": "P90 Minutes to Undo Vandalism"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Key Measures"
+                  }
+                },
+                "Property": "Median Minutes to Undo Vandalism"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Minutes to undo vandalism by editor type (Q2)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

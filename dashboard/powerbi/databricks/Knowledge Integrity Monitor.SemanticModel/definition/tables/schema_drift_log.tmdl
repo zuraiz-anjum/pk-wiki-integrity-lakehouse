@@ -1,0 +1,99 @@
+/// Schema changes the pipeline noticed in the source files.
+table schema_drift_log
+	lineageTag: 2730271b-70b0-5b51-bd10-efc80d9f7503
+
+	column source
+		dataType: string
+		lineageTag: f59c859d-6c0c-5142-9247-9b575d20b659
+		summarizeBy: none
+		sourceColumn: source
+
+		annotation SummarizationSetBy = User
+
+	column batch_ref
+		dataType: string
+		lineageTag: 633efbd5-aa38-57d1-a38d-362df18e9bd3
+		summarizeBy: none
+		sourceColumn: batch_ref
+
+		annotation SummarizationSetBy = User
+
+	column wiki
+		dataType: string
+		lineageTag: a8b8d781-b8bc-5b5c-a015-baf5068dc3ee
+		summarizeBy: none
+		sourceColumn: wiki
+
+		annotation SummarizationSetBy = User
+
+	column drift_type
+		dataType: string
+		lineageTag: 3d32499b-8abd-506c-a5f1-bf95f78c3729
+		summarizeBy: none
+		sourceColumn: drift_type
+
+		annotation SummarizationSetBy = User
+
+	column field_name
+		dataType: string
+		lineageTag: 65d0fed2-767d-5a36-ba96-5c4ef6125f16
+		summarizeBy: none
+		sourceColumn: field_name
+
+		annotation SummarizationSetBy = User
+
+	column row_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 4bf1f262-dbeb-5def-8058-fc8b36e01288
+		summarizeBy: sum
+		sourceColumn: row_count
+
+		annotation SummarizationSetBy = User
+
+	column sample_value
+		dataType: string
+		lineageTag: c410b3ed-1b2d-50a3-ae25-0615814a7330
+		summarizeBy: none
+		sourceColumn: sample_value
+
+		annotation SummarizationSetBy = User
+
+	column action_taken
+		dataType: string
+		lineageTag: 28fe29a5-fb97-5aa1-8155-547981d5f46d
+		summarizeBy: none
+		sourceColumn: action_taken
+
+		annotation SummarizationSetBy = User
+
+	column first_seen_run_id
+		dataType: string
+		lineageTag: a1a8b8b9-1760-5dbc-aee4-f0616c214e92
+		summarizeBy: none
+		sourceColumn: first_seen_run_id
+
+		annotation SummarizationSetBy = User
+
+	column load_timestamp
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 595c905a-0139-5f52-b765-8ed698c79073
+		summarizeBy: none
+		sourceColumn: load_timestamp
+
+		annotation SummarizationSetBy = User
+
+	partition schema_drift_log = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null, Implementation = "2.0"]),
+				    CatalogData = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+				    SchemaData = CatalogData{[Name = OpsSchema, Kind = "Schema"]}[Data],
+				    TableData = SchemaData{[Name = "schema_drift_log", Kind = "Table"]}[Data],
+				    Result = PrepareTable(TableData, {{"source", "text"}, {"batch_ref", "text"}, {"wiki", "text"}, {"drift_type", "text"}, {"field_name", "text"}, {"row_count", "int"}, {"sample_value", "text"}, {"action_taken", "text"}, {"first_seen_run_id", "text"}, {"load_timestamp", "datetime"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

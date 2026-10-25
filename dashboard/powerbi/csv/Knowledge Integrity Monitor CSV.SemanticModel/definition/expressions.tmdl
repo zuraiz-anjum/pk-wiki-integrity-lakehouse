@@ -1,0 +1,34 @@
+/// Full path of the dashboard\sample_gold folder of your copy of the repo, ending with a backslash. Power BI has no paths relative to the project file.
+expression SampleFolder = "C:\pbi\pk-wiki-integrity-lakehouse\dashboard\sample_gold\" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+	lineageTag: 7aa549f3-1b1b-58ef-9200-270d8ef3d26a
+
+	annotation PBI_ResultType = Text
+
+/// Picks the columns the model needs and gives them the right types. Works for Databricks and CSV input.
+expression PrepareTable =
+		(source as table, columns as list) as table =>
+		let
+		    Names = List.Transform(columns, each _{0}),
+		    Picked = Table.SelectColumns(source, Names, MissingField.UseNull),
+		    IsBlank = (v) => v = null or (v is text and Text.Trim(v) = ""),
+		    ToInt = (v) => if IsBlank(v) then null else if v is number then Int64.From(v) else Int64.From(Text.Trim(Text.From(v)), "en-US"),
+		    ToNum = (v) => if IsBlank(v) then null else if v is number then v else Number.From(Text.Trim(Text.From(v)), "en-US"),
+		    ToBool = (v) => if IsBlank(v) then null else if v is logical then v else Text.Lower(Text.Trim(Text.From(v))) = "true",
+		    ToDateTime = (v) => if IsBlank(v) then null else if v is datetimezone then DateTimeZone.RemoveZone(v) else if v is datetime then v else if v is date then DateTime.From(v) else DateTime.From(Text.Trim(Text.From(v)), "en-US"),
+		    ToDate = (v) => if IsBlank(v) then null else if v is date then v else if v is datetime then Date.From(v) else if v is datetimezone then Date.From(DateTimeZone.RemoveZone(v)) else Date.From(Text.Trim(Text.From(v)), "en-US"),
+		    ToText = (v) => if v = null then null else if v is text then v else if v is list then Text.Combine(List.Transform(v, Text.From), "; ") else Text.From(v),
+		    Converters = [
+		        int = {ToInt, Int64.Type},
+		        num = {ToNum, type number},
+		        bool = {ToBool, type logical},
+		        datetime = {ToDateTime, type datetime},
+		        date = {ToDate, type date},
+		        text = {ToText, type text}
+		    ],
+		    Steps = List.Transform(columns, each {_{0}, Record.Field(Converters, _{1}){0}, Record.Field(Converters, _{1}){1}}),
+		    Typed = Table.TransformColumns(Picked, Steps)
+		in
+		    Typed
+	lineageTag: 22ff1f67-330c-5394-ba9f-2aaf8a61b531
+
+	annotation PBI_ResultType = Function

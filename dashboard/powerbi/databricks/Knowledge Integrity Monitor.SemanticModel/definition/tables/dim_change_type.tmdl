@@ -1,0 +1,51 @@
+/// Kinds of change (create, revert, minor, edit, move, delete, ...).
+table dim_change_type
+	lineageTag: 282218e0-10eb-5447-9931-758024a29599
+
+	column change_type_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 0d506199-c6aa-5ea9-bf20-bfc7902bb9a6
+		summarizeBy: none
+		sourceColumn: change_type_key
+
+		annotation SummarizationSetBy = User
+
+	column entity
+		dataType: string
+		lineageTag: 25b2212a-34c8-5b91-8d24-b282b28cd788
+		summarizeBy: none
+		sourceColumn: entity
+
+		annotation SummarizationSetBy = User
+
+	column change_type
+		dataType: string
+		lineageTag: 89797fa8-6047-58e9-95ae-e0e604767e5a
+		summarizeBy: none
+		sourceColumn: change_type
+
+		annotation SummarizationSetBy = User
+
+	column description
+		dataType: string
+		lineageTag: b2e73f59-5727-5b4c-b2bc-ae4f648825e1
+		summarizeBy: none
+		sourceColumn: description
+
+		annotation SummarizationSetBy = User
+
+	partition dim_change_type = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null, Implementation = "2.0"]),
+				    CatalogData = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+				    SchemaData = CatalogData{[Name = GoldSchema, Kind = "Schema"]}[Data],
+				    TableData = SchemaData{[Name = "dim_change_type", Kind = "Table"]}[Data],
+				    Result = PrepareTable(TableData, {{"change_type_key", "int"}, {"entity", "text"}, {"change_type", "text"}, {"description", "text"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

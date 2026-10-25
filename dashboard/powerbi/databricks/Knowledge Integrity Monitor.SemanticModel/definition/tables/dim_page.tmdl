@@ -1,0 +1,138 @@
+/// Pages, one row per version (SCD Type 2).
+table dim_page
+	lineageTag: 82a0ed1f-afcd-53b8-b879-c8fbaa4b5461
+
+	column page_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 22081000-383d-5cb0-aeb9-b8e00c4ab84d
+		summarizeBy: none
+		sourceColumn: page_key
+
+		annotation SummarizationSetBy = User
+
+	column page_sk
+		dataType: string
+		isHidden
+		lineageTag: ee5b8b42-a026-5b2d-8299-207af399ab78
+		summarizeBy: none
+		sourceColumn: page_sk
+
+		annotation SummarizationSetBy = User
+
+	column wiki_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 45312cac-1b0e-5045-9668-496dc81d4b08
+		summarizeBy: none
+		sourceColumn: wiki_key
+
+		annotation SummarizationSetBy = User
+
+	column wiki
+		dataType: string
+		lineageTag: 2da99413-22f6-591e-b6be-a3a6f8a50cfd
+		summarizeBy: none
+		sourceColumn: wiki
+
+		annotation SummarizationSetBy = User
+
+	column page_id
+		dataType: int64
+		formatString: 0
+		lineageTag: b5382711-5099-5208-aede-2f097c837b52
+		summarizeBy: none
+		sourceColumn: page_id
+
+		annotation SummarizationSetBy = User
+
+	column page_title
+		dataType: string
+		lineageTag: 27c87cb9-5f74-5a73-9e82-05c8f02c67ee
+		summarizeBy: none
+		sourceColumn: page_title
+
+		annotation SummarizationSetBy = User
+
+	column page_namespace
+		dataType: int64
+		formatString: 0
+		lineageTag: 5575e2c1-4259-53e5-bd44-47829794be98
+		summarizeBy: none
+		sourceColumn: page_namespace
+
+		annotation SummarizationSetBy = User
+
+	column namespace_name
+		dataType: string
+		lineageTag: a772ae4d-2fe0-5715-8f1d-90d8aa81ab30
+		summarizeBy: none
+		sourceColumn: namespace_name
+
+		annotation SummarizationSetBy = User
+
+	column is_content_page
+		dataType: boolean
+		lineageTag: 0bc86ada-480a-5c00-b66f-2e0e80da8092
+		summarizeBy: none
+		sourceColumn: is_content_page
+
+		annotation SummarizationSetBy = User
+
+	column is_redirect
+		dataType: boolean
+		lineageTag: 943540b8-b3eb-5ecb-8e65-8ef9a12328ad
+		summarizeBy: none
+		sourceColumn: is_redirect
+
+		annotation SummarizationSetBy = User
+
+	column is_deleted
+		dataType: boolean
+		lineageTag: b3b2a429-e7f2-58f4-a8bf-8dc32015c9b6
+		summarizeBy: none
+		sourceColumn: is_deleted
+
+		annotation SummarizationSetBy = User
+
+	column valid_from
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 5e7a7661-ba10-5d4e-9a9a-d5fb114ab4a5
+		summarizeBy: none
+		sourceColumn: valid_from
+
+		annotation SummarizationSetBy = User
+
+	column valid_to
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: fa4cad11-32c2-5eec-a172-f68aeb5b15e2
+		summarizeBy: none
+		sourceColumn: valid_to
+
+		annotation SummarizationSetBy = User
+
+	column is_current
+		dataType: boolean
+		lineageTag: d1a1f090-1e80-57ea-960e-b0915589a546
+		summarizeBy: none
+		sourceColumn: is_current
+
+		annotation SummarizationSetBy = User
+
+	partition dim_page = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null, Implementation = "2.0"]),
+				    CatalogData = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+				    SchemaData = CatalogData{[Name = GoldSchema, Kind = "Schema"]}[Data],
+				    TableData = SchemaData{[Name = "dim_page", Kind = "Table"]}[Data],
+				    Result = PrepareTable(TableData, {{"page_key", "int"}, {"page_sk", "text"}, {"wiki_key", "int"}, {"wiki", "text"}, {"page_id", "int"}, {"page_title", "text"}, {"page_namespace", "int"}, {"namespace_name", "text"}, {"is_content_page", "bool"}, {"is_redirect", "bool"}, {"is_deleted", "bool"}, {"valid_from", "datetime"}, {"valid_to", "datetime"}, {"is_current", "bool"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

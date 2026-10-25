@@ -1,0 +1,84 @@
+/// The four wikis: Urdu, Punjabi (Shahmukhi), Sindhi and Pashto.
+table dim_wiki
+	lineageTag: 0070e273-6f47-5728-8ff9-7764b78c8e12
+
+	column wiki_key
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: b2653c1b-43f0-53af-99f4-cf5ab65f45dd
+		summarizeBy: none
+		sourceColumn: wiki_key
+
+		annotation SummarizationSetBy = User
+
+	column wiki
+		dataType: string
+		lineageTag: 2dbc5544-8fb2-5de7-95a2-0656b4b4292e
+		summarizeBy: none
+		sourceColumn: wiki
+
+		annotation SummarizationSetBy = User
+
+	column language_name
+		dataType: string
+		lineageTag: 91c5697c-3f99-59eb-866c-8bccf41b79f4
+		summarizeBy: none
+		sourceColumn: language_name
+
+		annotation SummarizationSetBy = User
+
+	column language_native
+		dataType: string
+		lineageTag: 004dc352-6117-57cc-a1cb-a6fa2e6e343e
+		summarizeBy: none
+		sourceColumn: language_native
+
+		annotation SummarizationSetBy = User
+
+	column language_code
+		dataType: string
+		lineageTag: a6e8e9fa-550c-54e4-b441-af671126a308
+		summarizeBy: none
+		sourceColumn: language_code
+
+		annotation SummarizationSetBy = User
+
+	column script
+		dataType: string
+		lineageTag: 3c3d356e-971a-57b2-a0d6-c5d684ea51ea
+		summarizeBy: none
+		sourceColumn: script
+
+		annotation SummarizationSetBy = User
+
+	column site_url
+		dataType: string
+		lineageTag: 70127faa-c60f-5690-a9e3-6b35125fd43f
+		summarizeBy: none
+		sourceColumn: site_url
+
+		annotation SummarizationSetBy = User
+
+	column temp_accounts_first_seen_ts
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: fea5b17b-cb76-5c70-a4ad-d6a026c02ea5
+		summarizeBy: none
+		sourceColumn: temp_accounts_first_seen_ts
+
+		annotation SummarizationSetBy = User
+
+	partition dim_wiki = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null, Implementation = "2.0"]),
+				    CatalogData = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+				    SchemaData = CatalogData{[Name = GoldSchema, Kind = "Schema"]}[Data],
+				    TableData = SchemaData{[Name = "dim_wiki", Kind = "Table"]}[Data],
+				    Result = PrepareTable(TableData, {{"wiki_key", "int"}, {"wiki", "text"}, {"language_name", "text"}, {"language_native", "text"}, {"language_code", "text"}, {"script", "text"}, {"site_url", "text"}, {"temp_accounts_first_seen_ts", "datetime"}})
+				in
+				    Result
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,31 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_ProTooling = ["DevMode"]
+
+annotation PBI_QueryOrder = ["DatabricksHost","DatabricksHttpPath","DatabricksCatalog","GoldSchema","OpsSchema","PrepareTable","dim_date","dim_wiki","dim_page","dim_editor","dim_change_type","fact_revision","fact_page_event","agg_wiki_daily","agg_revert_latency","agg_edit_wars","agg_editor_monthly","pipeline_execution_logs","quarantine","schema_drift_log"]
+
+ref table 'Key Measures'
+ref table dim_date
+ref table dim_wiki
+ref table dim_page
+ref table dim_editor
+ref table dim_change_type
+ref table fact_revision
+ref table fact_page_event
+ref table agg_wiki_daily
+ref table agg_revert_latency
+ref table agg_edit_wars
+ref table agg_editor_monthly
+ref table pipeline_execution_logs
+ref table quarantine
+ref table schema_drift_log
+
+ref cultureInfo en-US

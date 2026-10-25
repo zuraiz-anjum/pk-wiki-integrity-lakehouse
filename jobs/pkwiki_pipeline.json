@@ -41,6 +41,14 @@
         "notebook_path": "notebooks/03_silver_scd2_and_reverts",
         "source": "GIT"
       }
+    },
+    {
+      "task_key": "gold",
+      "depends_on": [{"task_key": "scd2"}],
+      "notebook_task": {
+        "notebook_path": "notebooks/04_gold_star",
+        "source": "GIT"
+      }
     }
   ],
   "schedule": {

@@ -18,6 +18,8 @@ from pipeline.audit import raise_if_failed
 from pipeline.bronze import load_history_snapshot, load_recentchanges, rebuild_partitions
 from pipeline.config import Config, date_range, new_run_id, parse_snapshot, parse_wikis
 from pipeline.delta_utils import init_session, sql_list, table_name
+from pipeline.gold import run_gold_refresh
+from pipeline.setup import create_layers
 from pipeline.silver import silver_from_history, silver_from_recentchanges
 from pipeline.silver_history import run_silver_history
 
@@ -105,6 +107,21 @@ def run_silver_scd2(spark, params):
     refs = silver_refs(spark, cfg, p)
     print(f"run {run['run_id']}: silver scd2 + reverts, {p['load_type']} {refs} {wikis}")
     run_silver_history(spark, cfg, run, p["load_type"], refs, wikis)
+    raise_if_failed(run)
+    return run
+
+
+def run_gold(spark, params, on_databricks=True):
+    """Silver -> Gold. Gold always covers every wiki: it picks up whatever silver changed since
+    the last gold run (any wiki, any day), so `wikis`, `start_date` and `end_date` only matter for
+    the steps before it. load_type=full merges against all of silver and removes rows silver
+    removed."""
+    init_session(spark)
+    cfg, run, p, _ = resolve(params)
+    print(f"run {run['run_id']}: silver -> gold, {p['load_type']}")
+    # creates the gold tables on the first run, so a workspace set up in phase 2 needs nothing extra
+    create_layers(spark, cfg, ("gold", "ops"), on_databricks, verbose=False)
+    run_gold_refresh(spark, cfg, run, p["load_type"] == "full", on_databricks)
     raise_if_failed(run)
     return run
 

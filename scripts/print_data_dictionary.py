@@ -5,6 +5,7 @@ always match the schemas the pipeline actually creates.
     python scripts/print_data_dictionary.py                      # every table
     python scripts/print_data_dictionary.py --table revision     # one table (key or table name)
     python scripts/print_data_dictionary.py --table bronze_rc,quarantine
+    python scripts/print_data_dictionary.py --layer gold         # one layer (docs/gold_data_dictionary.md)
 
 Only needs pyspark installed (pyspark.sql.types), no Spark session / Java.
 """
@@ -19,7 +20,16 @@ from pyspark.sql.types import StructType  # noqa: E402
 
 from pipeline import schemas as sc  # noqa: E402
 
-LAYER_TITLES = {"bronze": "Bronze", "silver": "Silver", "ops": "Ops (audit, drift, quarantine)"}
+# same as pipeline.gold.CLUSTER_COLUMNS, copied so this script doesn't need pyspark.sql.functions
+CLUSTER_COLUMNS = {
+    "gold_fact_revision": ["date_key", "wiki_key", "page_key"],
+    "gold_fact_page_event": ["date_key", "wiki_key", "page_key"],
+    "gold_dim_page": ["wiki_key", "page_id"],
+    "gold_dim_editor": ["wiki_key", "editor_hash"],
+}
+
+LAYER_TITLES = {"bronze": "Bronze", "silver": "Silver", "gold": "Gold (star schema)",
+                "ops": "Ops (audit, drift, quarantine, gold watermark)"}
 
 # one line per table, shown under the heading
 TABLE_NOTES = {
@@ -31,6 +41,20 @@ TABLE_NOTES = {
     "silver_user_event": "Account creations, renames, blocks, unblocks and group changes.",
     "silver_page": "SCD Type 2 page dimension (title, namespace, redirect, deleted). One row per version.",
     "silver_editor": "SCD Type 2 editor dimension (editor_type, is_bot). One row per version.",
+    "gold_dim_date": "Calendar dimension, one row per day from 2001-01-01 to 2030-12-31.",
+    "gold_dim_wiki": "One row per wiki: language, script and when temporary accounts first show up in the data.",
+    "gold_dim_page": "SCD Type 2 page dimension, one row per version of a page (from silver.page) plus one "
+                     "unknown page per wiki (key -1 to -4).",
+    "gold_dim_editor": "SCD Type 2 editor dimension, one row per version of an editor (from silver.editor) plus "
+                       "one unknown editor per wiki (key -1 to -4). Editors are only known by their salted hash.",
+    "gold_dim_change_type": "What kind of change a fact row is: 4 revision types and 8 page event types.",
+    "gold_fact_revision": "Fact, one row per edit. Measures for growth, reverts, vandalism and bot share.",
+    "gold_fact_page_event": "Fact, one row per page log event (create, move, delete, restore, protect, ...).",
+    "gold_agg_wiki_daily": "Aggregate fact, one row per wiki per day, built from the two facts.",
+    "gold_agg_revert_latency": "Aggregate fact, time to revert per wiki, month and editor type of the reverted edit.",
+    "gold_agg_edit_wars": "Aggregate fact, page-days with at least 3 reverts by at least 2 different editors.",
+    "gold_agg_editor_monthly": "Aggregate fact, editor counts and next-month return per wiki, month and human / bot.",
+    "gold_watermark": "Newest silver load_timestamp each gold table has already taken in (incremental refresh).",
     "execution_log": "Audit log. One row per unit of work (file/partition or table) per run.",
     "drift_log": "Every schema drift we noticed, one row per field per batch.",
     "quarantine": "Rows that failed a silver check, with the reasons and the raw line so they can be replayed.",
@@ -106,14 +130,16 @@ def type_str(dtype):
     return dtype.simpleString()
 
 
-def row(name, dtype, nullable, comment, pk):
+def row(name, dtype, nullable, comment, pk, fks=None):
     null = "yes" if nullable else "no"
-    key = "PK" if name in pk else ""
+    keys = (["PK"] if name in pk else []) + [f"FK {ref}" for col, ref in (fks or []) if col == name]
+    key = ", ".join(keys)
     return f"| `{name}` | `{type_str(dtype)}` | {null} | {key} | {cell(comment)} |"
 
 
 def table_rows(key, schema, pk):
     out = ["| Column | Type | Null | Key | Description |", "| --- | --- | --- | --- | --- |"]
+    fks = [(col, f"{sc.TABLES[ref][1]}.{ref_col}") for col, ref, ref_col in sc.GOLD_FKS.get(key, [])]
     collapsed = False
     for fld in schema.fields:
         comment = describe_col(key, fld.name, fld.metadata.get("comment", ""))
@@ -125,7 +151,7 @@ def table_rows(key, schema, pk):
                            "full list with target types below |")
                 collapsed = True
             continue
-        out.append(row(fld.name, fld.dataType, fld.nullable, comment, pk))
+        out.append(row(fld.name, fld.dataType, fld.nullable, comment, pk, fks))
         if isinstance(fld.dataType, StructType):
             for sub in fld.dataType.fields:
                 path = f"{fld.name}.{sub.name}"
@@ -152,7 +178,12 @@ def describe(key):
     lines = [f"#### pkwiki_{layer}.{name}", ""]
     if key in TABLE_NOTES:
         lines += [TABLE_NOTES[key], ""]
-    part_txt = ("Partitioned by " + ", ".join(f"`{p}`" for p in parts)) if parts else "Not partitioned"
+    if parts:
+        part_txt = "Partitioned by " + ", ".join(f"`{p}`" for p in parts)
+    elif layer == "gold" and key in CLUSTER_COLUMNS:
+        part_txt = "Not partitioned, clustered by " + ", ".join(f"`{c}`" for c in CLUSTER_COLUMNS[key])
+    else:
+        part_txt = "Not partitioned"
     lines += [f"{part_txt}. Primary key: {', '.join(f'`{c}`' for c in pk)}.", ""]
     lines += table_rows(key, schema, pk)
     if key == "bronze_history":
@@ -160,7 +191,9 @@ def describe(key):
     return lines + [""]
 
 
-def pick(filter_arg):
+def pick(filter_arg, layer=None):
+    if layer:
+        return [k for k, v in sc.TABLES.items() if v[0] == layer or (layer == "gold" and k == "gold_watermark")]
     if not filter_arg:
         return list(sc.TABLES)
     wanted = [w.strip() for w in filter_arg.split(",") if w.strip()]
@@ -173,8 +206,9 @@ def pick(filter_arg):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--table", help="comma separated table keys or names, e.g. silver_revision or revision")
+    ap.add_argument("--layer", help="bronze, silver, gold or ops (gold also lists ops.gold_watermark)")
     a = ap.parse_args()
-    keys = pick(a.table)
+    keys = pick(a.table, a.layer)
     out, layer_seen = [], None
     for k in keys:
         layer = sc.TABLES[k][0]

@@ -101,3 +101,31 @@ def conform(df, schema):
 
 def sql_list(values):
     return ", ".join("'" + v.replace("'", "''") + "'" for v in values)
+
+
+class FeatureNotAvailable(Exception):
+    """The Delta build we run on doesn't have this (open source vs Databricks)."""
+
+
+def optimize_table(spark, full_name, cols, on_databricks):
+    """Lay the files out by the columns we filter and join on most.
+
+    Databricks: liquid clustering. CLUSTER BY is set once (it is a table property), then OPTIMIZE
+    clusters whatever isn't clustered yet, so running it every day only touches new files.
+    Open source Delta has no ALTER TABLE ... CLUSTER BY in our version, so locally we fall back to
+    OPTIMIZE ... ZORDER BY. If neither works we raise FeatureNotAvailable and the caller skips."""
+    col_list = ", ".join(cols)
+    if on_databricks:
+        detail = spark.sql(f"DESCRIBE DETAIL {full_name}").collect()[0].asDict()
+        current = list(detail.get("clusteringColumns") or [])
+        if current != list(cols):
+            spark.sql(f"ALTER TABLE {full_name} CLUSTER BY ({col_list})")
+        spark.sql(f"OPTIMIZE {full_name}")
+        return f"CLUSTER BY ({col_list}) + OPTIMIZE"
+    try:
+        r = spark.sql(f"OPTIMIZE {full_name} ZORDER BY ({col_list})").collect()
+    except Exception as e:
+        raise FeatureNotAvailable(f"OPTIMIZE ZORDER not supported here ({type(e).__name__})") from e
+    m = r[0]["metrics"] if r and "metrics" in r[0].asDict() else None
+    files = f", files {m['numFilesRemoved']} -> {m['numFilesAdded']}" if m else ""
+    return f"OPTIMIZE ZORDER BY ({col_list}){files}"

@@ -226,12 +226,194 @@ SILVER_EDITOR = StructType([
 ])
 
 # --------------------------------------------------------------------------------------
+# Gold tables (star schema, see docs/gold_data_dictionary.md)
+# Surrogate keys are xxhash64 of the natural key, -1 is the unknown member.
+# --------------------------------------------------------------------------------------
+DBL = DoubleType()
+
+GOLD_DIM_DATE = StructType([
+    f("date_key", I, "yyyymmdd, e.g. 20260927", False),
+    f("date", D, "calendar day", False),
+    f("year", I), f("quarter", I), f("month", I),
+    f("month_name", S, "January ... December"),
+    f("year_month", S, "YYYY-MM"),
+    f("month_start_date", D, "first day of the month"),
+    f("day_of_month", I),
+    f("day_of_week", I, "1 = Monday ... 7 = Sunday"),
+    f("day_name", S, "Monday ... Sunday"),
+    f("week_of_year", I, "ISO week"),
+    f("is_weekend", B, "Saturday or Sunday"),
+    f("is_pk_public_holiday", B, "fixed-date Pakistani public holiday (Eid and other lunar holidays not included)"),
+    f("holiday_name", S, "name of the holiday, null on normal days"),
+    f("load_timestamp", T, "when this row was written", False),
+])
+
+GOLD_DIM_WIKI = StructType([
+    f("wiki_key", I, "small fixed code, 1 to 4", False),
+    f("wiki", S, "urwiki, pnbwiki, sdwiki, pswiki", False),
+    f("language_name", S, "Urdu, Punjabi (Shahmukhi), Sindhi, Pashto"),
+    f("language_native", S, "language name in its own script"),
+    f("language_code", S, "ur, pnb, sd, ps"),
+    f("script", S, "writing system"),
+    f("site_url", S),
+    f("temp_accounts_first_seen_ts", T, "first edit by a temporary account we have for this wiki (rollout as seen in the data)"),
+    f("load_timestamp", T, "when this row was last written", False),
+])
+
+GOLD_DIM_PAGE = StructType([
+    f("page_key", L, "surrogate key, xxhash64 of page_sk, -1 to -4 = unknown page of wiki 1 to 4", False),
+    f("page_sk", S, "silver.page key of this version (lineage)", False),
+    f("wiki_key", I, "which wiki", False),
+    f("wiki", S, "", False),
+    f("page_id", L, "MediaWiki page id", False),
+    f("page_title", S, "title in this version (user pages masked)"),
+    f("page_namespace", I, "namespace number"),
+    f("namespace_name", S, "Article, Talk, User, Project, File, Template, Help, Category, Portal, Other"),
+    f("is_content_page", B, "namespace 0 (articles)"),
+    f("is_redirect", B), f("is_deleted", B, "deleted in this version (soft delete)"),
+    f("valid_from", T, "", False), f("valid_to", T, "null while current"),
+    f("is_current", B, "", False),
+    f("row_hash", S, "hash of the columns above, MERGE only updates when it changes"),
+    f("batch_id", S, "run that last wrote the row"),
+    f("load_timestamp", T, "when gold last wrote this row", False),
+])
+
+GOLD_DIM_EDITOR = StructType([
+    f("editor_key", L, "surrogate key, xxhash64 of editor_sk, -1 to -4 = unknown editor of wiki 1 to 4", False),
+    f("editor_sk", S, "silver.editor key of this version (lineage)", False),
+    f("wiki_key", I, "which wiki", False),
+    f("wiki", S, "", False),
+    f("editor_hash", S, "salted hash user_/ip_/tmp_<hash>, bot accounts keep their public name", False),
+    f("editor_type", S, _EDITOR_TYPES),
+    f("is_bot", B), f("is_anonymous", B, "ip or temporary account"),
+    f("registration_ts", T, "from the dump, null for api-only editors"),
+    f("first_seen_ts", T, "start of the first version we have for this editor"),
+    f("valid_from", T, "", False), f("valid_to", T, "null while current"),
+    f("is_current", B, "", False),
+    f("row_hash", S), f("batch_id", S), f("load_timestamp", T, "", False),
+])
+
+GOLD_DIM_CHANGE_TYPE = StructType([
+    f("change_type_key", I, "small fixed code", False),
+    f("entity", S, "revision | page_event", False),
+    f("change_type", S, "revision: create, revert, minor, edit. page_event: create, move, delete, ...", False),
+    f("description", S),
+    f("load_timestamp", T, "", False),
+])
+
+GOLD_FACT_REVISION = StructType([
+    f("revision_key", L, "xxhash64 of wiki|rev_id", False),
+    f("wiki_key", I, "which wiki", False),
+    f("date_key", I, "UTC day of the edit", False),
+    f("pkt_date_key", I, "Pakistan day of the edit", False),
+    f("page_key", L, "page version valid at the edit, unknown member if not found", False),
+    f("editor_key", L, "editor version valid at the edit, unknown member if not found", False),
+    f("change_type_key", I, "create, revert, minor or edit", False),
+    f("rev_id", L, "revision id (degenerate)", False),
+    f("page_id", L), f("parent_rev_id", L),
+    f("reverted_by_rev_id", L, "revision that undid this one"),
+    f("rev_ts", T, "edit time UTC", False), f("rev_ts_pkt", T, "edit time Pakistan"),
+    f("rev_hour_pkt", I, "hour of day in Pakistan time, 0 to 23"),
+    f("bytes", L, "page size after the edit"), f("bytes_diff", L),
+    f("bytes_added", L, "bytes_diff when positive, else 0"),
+    f("bytes_removed", L, "minus bytes_diff when negative, else 0"),
+    f("seconds_to_revert", L, "how long the edit survived, null if not reverted"),
+    f("is_bot_edit", B), f("is_anonymous_edit", B, "made by an ip or temporary account"),
+    f("is_minor", B), f("is_page_creation", B),
+    f("is_new_article", B, "page creation in namespace 0 that is not a redirect"),
+    f("is_revert", B, "this edit restored an earlier version"),
+    f("is_reverted", B, "this edit was later undone"),
+    f("is_vandalism_suspect", B, "reverted within 24 hours by a different editor"),
+    f("is_deleted", B),
+    f("source", S, "dump | api"),
+    f("row_hash", S), f("batch_id", S), f("load_timestamp", T, "", False),
+])
+
+GOLD_FACT_PAGE_EVENT = StructType([
+    f("page_event_key", L, "xxhash64 of wiki|event_key", False),
+    f("wiki_key", I, "which wiki", False),
+    f("date_key", I, "UTC day", False),
+    f("pkt_date_key", I, "Pakistan day", False),
+    f("page_key", L, "-1 if unknown", False),
+    f("editor_key", L, "who did it, unknown member if not found", False),
+    f("change_type_key", I, "kind of change", False),
+    f("event_key", S, "silver event key (degenerate)", False),
+    f("log_id", L), f("page_id", L), f("page_namespace", I),
+    f("event_ts", T, "", False), f("event_ts_pkt", T),
+    f("source", S, "dump | api"),
+    f("row_hash", S), f("batch_id", S), f("load_timestamp", T, "", False),
+])
+
+GOLD_AGG_WIKI_DAILY = StructType([
+    f("wiki_key", I, "which wiki", False),
+    f("date_key", I, "UTC day", False),
+    f("edits", L), f("human_edits", L), f("bot_edits", L),
+    f("bot_edit_share", DBL, "bot_edits / edits"),
+    f("anonymous_edits", L, "ip + temporary account edits"),
+    f("new_articles", L), f("pages_created", L, "all namespaces"),
+    f("pages_deleted", L), f("pages_restored", L), f("pages_moved", L),
+    f("active_editors", L, "distinct editors with an edit that day"),
+    f("active_human_editors", L),
+    f("reverts", L), f("reverted_edits", L), f("vandalism_suspects", L),
+    f("median_seconds_to_revert", DBL, "over the edits of that day that were reverted"),
+    f("bytes_added", L), f("bytes_removed", L), f("net_bytes", L),
+    f("batch_id", S), f("load_timestamp", T, "", False),
+])
+
+GOLD_AGG_REVERT_LATENCY = StructType([
+    f("wiki_key", I, "which wiki", False),
+    f("month_key", I, "first day of the month", False),
+    f("editor_type", S, "type of the editor whose edit was reverted", False),
+    f("reverted_edits", L, "reverted edits with a known time to revert"),
+    f("vandalism_suspects", L),
+    f("median_seconds_to_revert", DBL), f("p90_seconds_to_revert", DBL),
+    f("avg_seconds_to_revert", DBL), f("median_minutes_to_revert", DBL),
+    f("batch_id", S), f("load_timestamp", T, "", False),
+])
+
+GOLD_AGG_EDIT_WARS = StructType([
+    f("wiki_key", I, "which wiki", False),
+    f("page_id", L, "MediaWiki page id", False),
+    f("date_key", I, "UTC day", False),
+    f("page_key", L, "page version at the last revert of the day", False),
+    f("revert_count", L, "reverts on the page that day (3 or more)"),
+    f("distinct_reverters", L, "different editors who reverted (2 or more)"),
+    f("edits", L, "all edits on the page that day"),
+    f("distinct_editors", L, "editors involved that day"),
+    f("first_revert_ts", T), f("last_revert_ts", T),
+    f("span_minutes", DBL, "minutes between the first and last revert"),
+    f("batch_id", S), f("load_timestamp", T, "", False),
+])
+
+GOLD_AGG_EDITOR_MONTHLY = StructType([
+    f("wiki_key", I, "which wiki", False),
+    f("month_key", I, "first day of the month", False),
+    f("editor_group", S, "human | bot", False),
+    f("editors", L, "editors with at least one edit"),
+    f("active_editors", L, "5 or more edits"),
+    f("very_active_editors", L, "100 or more edits"),
+    f("new_editors", L, "first edit we have from them is in this month"),
+    f("returning_next_month", L, "editors of this month who also edited the next month"),
+    f("active_returning_next_month", L, "active editors who also edited the next month"),
+    f("edits", L),
+    f("batch_id", S), f("load_timestamp", T, "", False),
+])
+
+# --------------------------------------------------------------------------------------
 # Ops tables
 # --------------------------------------------------------------------------------------
+GOLD_WATERMARK = StructType([
+    f("target_table", S, "gold table the watermark belongs to", False),
+    f("source_table", S, "silver table it reads"),
+    f("last_silver_load_ts", T, "newest silver load_timestamp already in gold"),
+    f("run_id", S, "run that moved it last"),
+    f("load_timestamp", T, "", False),
+])
+
 EXECUTION_LOG = StructType([
     f("log_id", S, "", False),
     f("run_id", S, "job run id, shared by all steps of one run"),
-    f("layer", S, "raw_to_bronze | bronze_to_silver | silver_scd2"),
+    f("layer", S, "raw_to_bronze | bronze_to_silver | silver_scd2 | silver_to_gold | gold_optimize"),
     f("load_type", S, "full | incremental"),
     f("target_table", S),
     f("source_param", S, "file path / partition / parameter that was processed"),
@@ -278,8 +460,43 @@ TABLES = {
     "silver_user_event": ("silver", "user_event", SILVER_USER_EVENT, ["wiki"], ["wiki", "event_key"]),
     "silver_page": ("silver", "page", SILVER_PAGE, ["wiki"], ["page_sk"]),
     "silver_editor": ("silver", "editor", SILVER_EDITOR, ["wiki"], ["editor_sk"]),
+    # gold: no partitions, the big tables are clustered instead (gold.CLUSTER_COLUMNS)
+    "gold_dim_date": ("gold", "dim_date", GOLD_DIM_DATE, [], ["date_key"]),
+    "gold_dim_wiki": ("gold", "dim_wiki", GOLD_DIM_WIKI, [], ["wiki_key"]),
+    "gold_dim_page": ("gold", "dim_page", GOLD_DIM_PAGE, [], ["page_key"]),
+    "gold_dim_editor": ("gold", "dim_editor", GOLD_DIM_EDITOR, [], ["editor_key"]),
+    "gold_dim_change_type": ("gold", "dim_change_type", GOLD_DIM_CHANGE_TYPE, [], ["change_type_key"]),
+    "gold_fact_revision": ("gold", "fact_revision", GOLD_FACT_REVISION, [], ["revision_key"]),
+    "gold_fact_page_event": ("gold", "fact_page_event", GOLD_FACT_PAGE_EVENT, [], ["page_event_key"]),
+    "gold_agg_wiki_daily": ("gold", "agg_wiki_daily", GOLD_AGG_WIKI_DAILY, [], ["wiki_key", "date_key"]),
+    "gold_agg_revert_latency": ("gold", "agg_revert_latency", GOLD_AGG_REVERT_LATENCY, [],
+                                ["wiki_key", "month_key", "editor_type"]),
+    "gold_agg_edit_wars": ("gold", "agg_edit_wars", GOLD_AGG_EDIT_WARS, [], ["wiki_key", "page_id", "date_key"]),
+    "gold_agg_editor_monthly": ("gold", "agg_editor_monthly", GOLD_AGG_EDITOR_MONTHLY, [],
+                                ["wiki_key", "month_key", "editor_group"]),
+    "gold_watermark": ("ops", "gold_watermark", GOLD_WATERMARK, [], ["target_table"]),
     "execution_log": ("ops", "pipeline_execution_logs", EXECUTION_LOG, [], ["log_id"]),
     "drift_log": ("ops", "schema_drift_log", SCHEMA_DRIFT_LOG, [],
                   ["source", "batch_ref", "wiki", "drift_type", "field_name"]),
     "quarantine": ("ops", "quarantine", QUARANTINE, ["source_table"], ["source_table", "record_hash"]),
+}
+
+# gold foreign keys: table key -> [(column, referenced table key, referenced column)].
+# added as informational FOREIGN KEY constraints in unity catalog (pipeline/setup.py)
+GOLD_FKS = {
+    "gold_dim_page": [("wiki_key", "gold_dim_wiki", "wiki_key")],
+    "gold_dim_editor": [("wiki_key", "gold_dim_wiki", "wiki_key")],
+    "gold_fact_revision": [("wiki_key", "gold_dim_wiki", "wiki_key"), ("date_key", "gold_dim_date", "date_key"),
+                           ("pkt_date_key", "gold_dim_date", "date_key"), ("page_key", "gold_dim_page", "page_key"),
+                           ("editor_key", "gold_dim_editor", "editor_key"),
+                           ("change_type_key", "gold_dim_change_type", "change_type_key")],
+    "gold_fact_page_event": [("wiki_key", "gold_dim_wiki", "wiki_key"), ("date_key", "gold_dim_date", "date_key"),
+                             ("pkt_date_key", "gold_dim_date", "date_key"), ("page_key", "gold_dim_page", "page_key"),
+                             ("editor_key", "gold_dim_editor", "editor_key"),
+                             ("change_type_key", "gold_dim_change_type", "change_type_key")],
+    "gold_agg_wiki_daily": [("wiki_key", "gold_dim_wiki", "wiki_key"), ("date_key", "gold_dim_date", "date_key")],
+    "gold_agg_revert_latency": [("wiki_key", "gold_dim_wiki", "wiki_key"), ("month_key", "gold_dim_date", "date_key")],
+    "gold_agg_edit_wars": [("wiki_key", "gold_dim_wiki", "wiki_key"), ("date_key", "gold_dim_date", "date_key"),
+                           ("page_key", "gold_dim_page", "page_key")],
+    "gold_agg_editor_monthly": [("wiki_key", "gold_dim_wiki", "wiki_key"), ("month_key", "gold_dim_date", "date_key")],
 }

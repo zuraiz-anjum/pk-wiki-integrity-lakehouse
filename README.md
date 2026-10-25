@@ -2,8 +2,9 @@
 
 A Spark / Delta Lake pipeline on Databricks that follows edits, new pages, deletions and reverts on
 the Urdu, Punjabi (Shahmukhi), Sindhi and Pashto Wikipedias. Data goes through Bronze and Silver
-layers (Gold and the Power BI dashboard come in Phase 3). This README covers Phase 2: the pipeline
-itself, the data models, and how to run it.
+layers into a Gold star schema that a Power BI dashboard reads. Phase 2 (the pipeline, the Bronze and
+Silver data models and how to run it) is described first, Phase 3 (the Gold layer) has its own
+section further down: [Phase 3: Gold layer](#phase-3-gold-layer).
 
 **Team:** Zuraiz Anjum (23L-2547) · Zoraiz Rizwan (23L-6008)
 
@@ -37,16 +38,19 @@ flowchart LR
     b1 -->|"02_silver_unify_and_mask"| s1["silver.revision<br/>silver.page_event<br/>silver.user_event"]
     b2 -->|"02_silver_unify_and_mask"| s1
     s1 -->|"03_silver_scd2_and_reverts"| s2["silver.page, silver.editor (SCD2)<br/>+ revert flags on silver.revision"]
-    s2 -.->|"phase 3"| gold["gold + Power BI"]
+    s2 -->|"04_gold_star"| gold["gold star schema<br/>5 dims, 2 facts, 4 aggregates"]
+    gold --> pbi["Power BI"]
     ops[("ops<br/>pipeline_execution_logs<br/>schema_drift_log<br/>quarantine")]
     b1 -.-> ops
     b2 -.-> ops
     s1 -.-> ops
     s2 -.-> ops
+    gold -.-> ops
 ```
 
-On Databricks everything lives in the `workspace` catalog, in four schemas:
-`pkwiki_raw` (only holds the landing volume), `pkwiki_bronze`, `pkwiki_silver` and `pkwiki_ops`.
+On Databricks everything lives in the `workspace` catalog, in five schemas:
+`pkwiki_raw` (only holds the landing volume), `pkwiki_bronze`, `pkwiki_silver`, `pkwiki_gold` and
+`pkwiki_ops`.
 The `pkwiki` part is the `prefix` parameter, so we can make a throwaway copy (`pkwiki_test`) next
 to the real one.
 
@@ -58,21 +62,25 @@ to the real one.
 | `notebooks/01_bronze_ingest.py` | Raw files -> Bronze |
 | `notebooks/02_silver_unify_and_mask.py` | Bronze -> Silver: cast, unify the two sources, mask PII, quarantine, MERGE |
 | `notebooks/03_silver_scd2_and_reverts.py` | Revert detection for API edits, SCD Type 2 page and editor tables |
+| `notebooks/04_gold_star.py` | Silver -> Gold: refreshes the star schema (dimensions, facts, aggregates) |
 | `notebooks/99_checks.py` | Read-only queries to look at a run: execution logs, idempotency check, duplicate keys, quarantine / drift, row counts, MERGE history |
-| `jobs/pkwiki_pipeline.json` | Job definition: bronze -> silver -> scd2, daily at 21:00 UTC (2 AM PKT), paused |
+| `jobs/pkwiki_pipeline.json` | Job definition: bronze -> silver -> scd2 -> gold, daily at 21:00 UTC (2 AM PKT), paused |
 | `pipeline/schemas.py` | Every schema, written by hand, plus the table registry (partitions, primary keys) |
 | `pipeline/runner.py` | Parameter handling, the entry points the notebooks call |
-| `pipeline/bronze.py`, `silver.py`, `silver_history.py` | The actual transformations |
+| `pipeline/bronze.py`, `silver.py`, `silver_history.py`, `gold.py` | The actual transformations |
 | `pipeline/audit.py` | Audit logging (`audit_step`) |
 | `pipeline/pii.py`, `common/pii_policy.py` | PII masking (Spark version and plain Python version, same rules) |
 | `pipeline/config.py`, `delta_utils.py`, `setup.py` | Table names, landing paths, MERGE helpers, table creation |
 | `ingestion/ingest_wikimedia.py` | Extractor: downloads the dump (full) or calls the recent changes API (incremental) |
 | `scripts/run_local.py` | Runs the pipeline on a laptop against `sample_data/` |
-| `scripts/print_data_dictionary.py` | Prints the data dictionary below from `pipeline/schemas.py` |
+| `scripts/print_data_dictionary.py` | Prints the data dictionary below from `pipeline/schemas.py` (`--layer gold` for the Gold one) |
+| `scripts/draw_gold_er.py` | Draws `docs/gold_er_diagram.png` from `pipeline/schemas.py` |
 | `sample_data/raw/` | PII-masked samples: dump snapshot 2026-08 (5,000 rows per wiki) and 24 hours of recent changes (27 Sep 2026) |
 | `sample_data/drift_demo/` | Small broken / changed files we use to show the drift handling |
 | `docs/phase1_proposal.pdf` | Phase 1 proposal |
-| `dashboard/` | Phase 3 |
+| `docs/GOLD-SCHEMA.md`, `docs/gold_data_dictionary.md`, `docs/gold_er_diagram.png` | Gold model: short overview, full data dictionary with the ER diagram, the diagram as a picture |
+| `docs/gold_fact_explain.txt` | Spark plan (`explain(mode="formatted")`) of the main Gold aggregation |
+| `dashboard/` | Power BI report, plus `sample_gold/` (CSV extracts of every Gold table from a local run) |
 
 ## How the pipeline works
 
@@ -252,6 +260,9 @@ ORDER BY start_ts;
 ```
 
 ## Data dictionary
+
+The Gold tables have their own dictionary with the ER diagram: `docs/gold_data_dictionary.md`.
+The tables below are Bronze, Silver and Ops.
 
 Generated from `pipeline/schemas.py` with `python scripts/print_data_dictionary.py`, so it matches
 the tables `00_setup` creates. On Databricks every name has the `workspace.` catalog in front
@@ -651,7 +662,7 @@ Partitioned by `source_table`. Primary key: `source_table`, `record_hash`.
    ```bash
    databricks jobs create --json @jobs/pkwiki_pipeline.json
    ```
-   It has three tasks (`bronze` -> `silver` -> `scd2`), runs at most one run at a time, and is
+   It has four tasks (`bronze` -> `silver` -> `scd2` -> `gold`), runs at most one run at a time, and is
    scheduled for 21:00 UTC (2 AM PKT) but created paused. Unpause the schedule when you want it to
    run every day.
 
@@ -671,7 +682,7 @@ string, an empty value means the default.
 | `catalog` | | `workspace` | Unity Catalog catalog |
 | `prefix` | | `pkwiki` | Schema prefix, e.g. `pkwiki_test` for a copy |
 | `landing_root` | path | `/Volumes/<catalog>/<prefix>_raw/landing` | Where the raw files are. Empty means the default volume |
-| `run_id` | | job run id, or `manual-<time>-<random>` | The job passes `{{job.run_id}}` so all three tasks share one id |
+| `run_id` | | job run id, or `manual-<time>-<random>` | The job passes `{{job.run_id}}` so all four tasks share one id |
 
 **Standard incremental vs backfill.** The only difference is the dates. With `start_date` and
 `end_date` empty, the run is the standard daily one: it takes the two newest `ingest_date` folders
@@ -697,9 +708,9 @@ Anything not listed stays at its default.
 | Test copy that doesn't touch the real tables | `prefix=pkwiki_test` (run `00_setup` with the same prefix first, with `seed_samples=yes` or point `landing_root` at the real volume) |
 
 **From the notebooks:** open `01_bronze_ingest`, fill in the widgets and Run all, then do the same
-in `02_silver_unify_and_mask` and `03_silver_scd2_and_reverts` with the same values. Each notebook
-shows the audit rows of its run at the end. If you want the three notebooks under one `run_id`,
-type the same value into the `run_id` widget in all three.
+in `02_silver_unify_and_mask`, `03_silver_scd2_and_reverts` and `04_gold_star` with the same values. Each notebook
+shows the audit rows of its run at the end. If you want the four notebooks under one `run_id`,
+type the same value into the `run_id` widget in all four.
 
 **From the job:** Run now with different parameters, or with the CLI / API. A backfill:
 
@@ -739,7 +750,7 @@ python scripts/run_local.py all --load_type incremental --start_date 2026-09-27
 python scripts/run_local.py sql "select * from pkwiki_ops.pipeline_execution_logs"
 ```
 
-`bronze`, `silver` and `scd2` run one step at a time, `all` runs the three in order. All the
+`bronze`, `silver`, `scd2` and `gold` run one step at a time, `all` runs the four in order. All the
 parameters from the table above work as `--name value`. Tables are written to `.local/` (or
 `$LOCAL_LAKEHOUSE`), delete it to start over.
 
@@ -787,6 +798,194 @@ copied the samples into the volume. Then, straight from `ops.pipeline_execution_
 rows + 3,208 SCD2 versions.) The row counts per table are the same as in the local runs. The drift
 demo, run into `pkwiki_drift`, gave the same 6 drift log rows and 7 quarantined rows as locally.
 
+## Phase 3: Gold layer
+
+Gold is a star schema in `pkwiki_gold` built from Silver, and it is what the Power BI report reads.
+It is not a copy of Silver: edits and page log events become facts with surrogate keys that point
+at shared dimensions, and the heavier numbers (medians, edit wars, editor retention) are
+precomputed in aggregate facts so the report stays fast.
+
+- `docs/GOLD-SCHEMA.md`: one page overview (tables, grain, keys, which question each table is for)
+- `docs/gold_data_dictionary.md`: every table and column with type, description and PK / FK, plus
+  the ER diagram as a Mermaid block
+- `docs/gold_er_diagram.png`: the same diagram as a picture
+- `docs/gold_fact_explain.txt`: the Spark plan of the main aggregation (see below)
+
+### Model
+
+![Gold ER diagram](docs/gold_er_diagram.png)
+
+| Table | Kind | Grain | Business question |
+| --- | --- | --- | --- |
+| `dim_date` | dimension | one row per day, 2001 to 2030, with weekday, month and fixed-date Pakistani holidays | all (time axis), heat map |
+| `dim_wiki` | dimension | one row per wiki: language, script, first temporary account edit seen in the data | all, Q5 |
+| `dim_page` | SCD2 dimension | one row per page version (from `silver.page`) | Q1, Q3 |
+| `dim_editor` | SCD2 dimension | one row per editor version (from `silver.editor`), only the salted hash | Q2, Q4, Q5 |
+| `dim_change_type` | dimension | 12 kinds of change (create / revert / minor / edit, and the page log types) | Q1, Q3 |
+| `fact_revision` | fact | one row per edit: bytes, revert flags, time to revert, vandalism suspect, bot / anonymous | Q1 to Q5 |
+| `fact_page_event` | fact | one row per page log event (create, move, delete, restore, protect, ...) | Q1, Q3 |
+| `agg_wiki_daily` | aggregate fact | wiki x day: edits, bot share, new articles, deletions, active editors, reverts | Q1, Q4, Q5 |
+| `agg_revert_latency` | aggregate fact | wiki x month x editor type: median, p90 and mean time to revert | Q2, Q5 |
+| `agg_edit_wars` | aggregate fact | page x day with 2+ reverts (contested), `is_edit_war` flags 3+ reverts by 2+ editors | Q3 |
+| `agg_editor_monthly` | aggregate fact | wiki x month x human/bot: editors, active (5+), new, came back next month | Q1, Q4 |
+
+The questions are the five from the Phase 1 proposal: growth (Q1), how fast vandalism is undone by
+editor type (Q2), most fought over pages (Q3), bot share (Q4) and the change after temporary
+accounts replaced IP editing (Q5).
+
+Keys:
+
+- Surrogate keys are `bigint` `xxhash64` values of the natural key (`page_sk`, `editor_sk`,
+  `wiki|rev_id`, `wiki|event_key`) with the sign bit cleared, so they are never negative, so a row gets the same key on every run and facts can be
+  loaded without a lookup table. `wiki_key` and `change_type_key` are small fixed codes,
+  `date_key` is `yyyymmdd`.
+- Facts pick the page and editor *version that was valid at the time of the edit* (point in time
+  lookup into the SCD2 dimensions). A renamed page keeps its old edits on the old title.
+- A fact that can't find its page or editor points at the unknown member of its own wiki
+  (key `-1` to `-4`), so every foreign key resolves.
+- On Databricks the PKs and FKs are added as Unity Catalog constraints (informational), so the
+  relationships show up in the catalog explorer and Power BI.
+- No raw usernames or IPs in Gold: editors are only known by the hash Silver made, and edit
+  summaries are not copied at all.
+
+### How to run it
+
+Gold is the fourth notebook and the fourth job task, so nothing changes in how the pipeline is
+started:
+
+- **Job:** `jobs/pkwiki_pipeline.json` now runs `bronze -> silver -> scd2 -> gold`. Every daily,
+  backfill or full run ends with Gold refreshed. To update an existing job, paste the new JSON
+  over it ("Edit as JSON") or run `databricks jobs reset`.
+- **Notebook:** `notebooks/04_gold_star` takes the same widgets as 01-03. Run it after 03 with the
+  same `load_type` (and `run_id` if you want one id for the whole run). It creates the Gold tables
+  on its first run, so a workspace set up in Phase 2 doesn't need `00_setup` again.
+- **Locally:** `python scripts/run_local.py gold --load_type full` (or `all`, which now includes
+  Gold). `python scripts/run_local.py explain` writes the plan of the main aggregation to
+  `docs/gold_fact_explain.txt` and `python scripts/run_local.py export` writes CSV extracts of the
+  Gold and ops tables to `dashboard/sample_gold/`.
+
+`wikis`, `start_date` and `end_date` don't limit Gold: it always takes in whatever Silver changed
+since the last Gold run, for any wiki and any day.
+
+### Refresh behaviour
+
+Everything is a MERGE that only updates a row when its content changed, so running Gold twice
+changes nothing.
+
+| Load | Dimensions and facts | Aggregates |
+| --- | --- | --- |
+| incremental (daily or backfill) | only the Silver rows with a `load_timestamp` newer than the last Gold run. The high water mark is kept per Gold table in `pkwiki_ops.gold_watermark` and only moves after the MERGE worked. Silver bumps `load_timestamp` on every insert and update, so revert flags filled in later and closed SCD2 versions come through too | recomputed only for the days (and months) whose fact rows changed in this run (they carry the run id in `batch_id`), then merged. Groups that no longer exist are deleted |
+| full (monthly dump) | merged against all of Silver, and Gold rows Silver no longer has are deleted (the monthly handover deletes API rows in Silver, Gold follows) | recomputed for everything |
+
+Notes:
+
+- `dim_date`, `dim_wiki` and `dim_change_type` are small static tables, seeded with MERGE. We
+  didn't use overwrite anywhere; the only place a full rebuild would have been simpler is
+  `agg_editor_monthly`, and even there we recompute all months (new and returning editors depend
+  on other months) but MERGE the result, so only changed rows are written.
+- A fact that pointed at an unknown member is looked up again on the next runs, in case its
+  dimension row arrived a run late.
+
+### Optimization
+
+The tables that grow with the data are clustered on the columns the report filters and joins on:
+
+| Table | Columns |
+| --- | --- |
+| `fact_revision`, `fact_page_event` | `date_key`, `wiki_key`, `page_key` |
+| `dim_page` | `wiki_key`, `page_id` |
+| `dim_editor` | `wiki_key`, `editor_hash` |
+
+On Databricks this is liquid clustering: the first Gold run sets `ALTER TABLE ... CLUSTER BY`, and
+every run ends with `OPTIMIZE`, which only clusters the files that aren't clustered yet. Locally (open
+source Delta 3.2) the same step runs `OPTIMIZE ... ZORDER BY` on the same columns instead. If neither is available the step is logged as
+`SKIPPED` and the load still counts as successful (`delta_utils.optimize_table`). The Gold tables
+are not partitioned: with clustering they don't need to be, and the daily data is far too small for
+partitions to help.
+
+`docs/gold_fact_explain.txt` is `explain(mode="formatted")` of the `agg_wiki_daily` build
+(`gold.wiki_daily_frame`): two aggregations (revisions joined to `dim_editor`, page events) that
+are full-outer-joined on `(wiki_key, date_key)`.
+
+### Logging
+
+Gold uses the same `audit_step()` as Bronze and Silver, so every Gold table write is one row in
+`ops.pipeline_execution_logs`:
+
+- `layer = 'silver_to_gold'` for the 11 table steps. `rows_read` is the number of Silver rows read
+  (dims and facts) or fact rows aggregated (aggregates), `rows_inserted` / `rows_updated` /
+  `rows_deleted` come from the MERGE metrics, `duration_sec` is the time per table.
+- `layer = 'gold_optimize'` for the 4 clustering steps (`SUCCESS`, or `SKIPPED` with the reason).
+- An aggregate with nothing to recompute (no fact changed) is logged as `SKIPPED`.
+
+```sql
+SELECT target_table, status, rows_read, rows_inserted, rows_updated, rows_deleted, duration_sec
+FROM workspace.pkwiki_ops.pipeline_execution_logs
+WHERE run_id = '<run id>' AND layer IN ('silver_to_gold', 'gold_optimize')
+ORDER BY start_ts;
+```
+
+### What we tested (Gold)
+
+Run locally on the samples (`scripts/run_local.py`, open source Spark 3.5 + Delta 3.2, `local[2]`),
+one run after the other on the same lakehouse:
+
+| Gold table | after full load 2026-08 | after incremental 2026-09-27 | after incremental 2026-09-28 (drift demo, pswiki) | rerun, nothing new |
+| --- | --- | --- | --- | --- |
+| `dim_date` | 10,957 | 10,957 | 10,957 | 10,957 |
+| `dim_wiki` | 4 | 4 | 4 | 4 |
+| `dim_change_type` | 12 | 12 | 12 | 12 |
+| `dim_page` | 2,718 | 9,166 | 9,166 | 9,166 |
+| `dim_editor` | 498 | 546 | 546 | 546 |
+| `fact_revision` | 17,106 | 26,169 | 26,172 | 26,172 |
+| `fact_page_event` | 2,671 | 4,067 | 4,068 | 4,068 |
+| `agg_wiki_daily` | 713 | 720 | 721 | 721 |
+| `agg_revert_latency` | 65 | 57 | 57 | 57 |
+| `agg_edit_wars` | 1 | 18 | 18 | 18 |
+| `agg_editor_monthly` | 116 | 152 | 152 | 152 |
+
+(The dims include the 4 unknown members each. `agg_revert_latency`, `agg_edit_wars` and
+`agg_editor_monthly` in the second column are after the fix and the full rerun described below.)
+
+- **Full load.** `fact_revision` = `silver.revision` row for row (17,106) and `fact_page_event` =
+  `silver.page_event` (2,671). `dim_page` / `dim_editor` = the 2,714 / 494 SCD2 versions + 4
+  unknown rows.
+- **Incremental 2026-09-27.** Only the new Silver rows were read: `dim_page` +6,448 versions and
+  1 updated (the page renamed in that batch got its `valid_to`), `dim_editor` +48,
+  `fact_revision` +9,063, `fact_page_event` +1,396. `agg_wiki_daily` was recomputed for the 2
+  touched days only (7 new wiki-days), `dim_wiki` picked up the first temporary account edit.
+- **Incremental 2026-09-28 (drift demo).** Bronze -> Silver -> SCD2 -> Gold in one go: 3 valid
+  edits and 1 page event reached Silver (3 broken lines went to quarantine), and Gold took exactly
+  those: `fact_revision` +3, `fact_page_event` +1, `agg_wiki_daily` recomputed for 1 day (+1 row),
+  `agg_editor_monthly` 1 row updated.
+- **Rerun with nothing new.** Every Gold step inserted, updated and deleted 0 rows. The three
+  day-scoped aggregates were logged as `SKIPPED` ("no fact rows changed in this run").
+- **Checks after all runs.** No duplicate PK in any Gold table, 0 orphan foreign keys (every FK
+  of every fact and aggregate checked with an anti join), one current version per page, and
+  `sum(agg_wiki_daily.edits)` = `count(fact_revision)` = 26,172. 7,422 dump edits have no
+  `page_id` in the dump itself, so they sit on the unknown page of their wiki; every edit found
+  its editor.
+- **Audit.** Every run above wrote 11 `silver_to_gold` rows and 4 `gold_optimize` rows
+  (OPTIMIZE ZORDER BY) to `ops.pipeline_execution_logs`, with rows read / inserted / updated /
+  deleted and the seconds per table (about 10 to 100 s per table locally on a busy laptop).
+
+One bug we found on the way: `xxhash64` is signed, so about half the surrogate keys came out
+negative and were taken for unknown members (negative keys are reserved for those). Now the sign
+bit is cleared. A `load_type=full` Gold run fixed the existing tables (it re-keyed 4,632 page
+versions, 257 editor versions and 13,154 edits and removed the old keys), which is also how the
+edit wars table got its two new columns (`reverted_edits`, `is_edit_war`) through
+`evolve_schema`. After the fix, 6 of the 18 contested page-days meet the strict Phase 1 edit war
+rule.
+
+The same notebook ran on Databricks Free Edition (serverless) from the branch, full and
+incremental, with every audit row `SUCCESS` and liquid clustering on the four tables.
+
+### Power BI
+
+The report is in `dashboard/` (see `dashboard/README.md`). It reads the Gold tables from the
+Databricks SQL warehouse; `dashboard/sample_gold/` has CSV extracts of every Gold and ops table
+from a local run so the report can also be opened without a workspace.
+
 ## Cost and free tier notes
 
 - Databricks Free Edition is serverless only and has a daily compute limit, so we keep runs small:
@@ -797,9 +996,8 @@ demo, run into `pkwiki_drift`, gave the same 6 drift log rows and 7 quarantined 
   on).
 - Most testing happens locally (above), Databricks is for the real runs.
 
-## Not done yet / Phase 3
+## Not done yet
 
-- Gold layer and the Power BI dashboard.
 - The DB-IP Lite country lookup for old IP edits from the proposal isn't implemented yet. Right
   now IPs are only hashed (`ip_<hash>`), so we have no country information.
 - The extractor still runs on our laptop and keeps its watermark in `watermarks.json`. The files
